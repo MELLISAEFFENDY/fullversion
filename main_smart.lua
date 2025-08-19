@@ -92,9 +92,20 @@ local function tryLoadOrionUI()
     
     local success, result = pcall(function()
         -- Load our custom ORION library first
-        local customOrionLib = loadstring(game:HttpGet(GITHUB_BASE .. 'orion_lib.lua'))()
+        local orionUrl = GITHUB_BASE .. 'orion_lib.lua'
+        print("🌐 Loading ORION library from: " .. orionUrl)
+        
+        local customOrionLib = loadstring(game:HttpGet(orionUrl))()
         
         if customOrionLib then
+            print("✅ Custom ORION library loaded")
+            print("🔍 Library type: " .. type(customOrionLib))
+            if customOrionLib.MakeWindow then
+                print("🔍 MakeWindow function found")
+            else
+                print("❌ MakeWindow function missing")
+            end
+            
             -- Store the library globally for modules to use
             getgenv().OrionLib = customOrionLib
             
@@ -102,7 +113,7 @@ local function tryLoadOrionUI()
             local orionModule = safeLoadModule("orion_ui")
             return orionModule
         else
-            error("Custom ORION library failed to load")
+            error("Custom ORION library failed to load - returned nil")
         end
     end)
     

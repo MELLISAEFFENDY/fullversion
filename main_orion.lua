@@ -5,6 +5,9 @@
 print("🎣 AutoFish Pro - ORION Edition")
 print("Loading modules...")
 
+-- GitHub Repository Configuration
+local GITHUB_BASE = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/"
+
 -- Load ORION library first
 local function loadOrionLib()
     print("📚 Loading ORION Library...")
@@ -49,9 +52,6 @@ local function loadOrionLib()
         return nil
     end
 end
-
--- GitHub Repository Configuration
-local GITHUB_BASE = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/"
 
 -- Modules to load
 local modules = {}
