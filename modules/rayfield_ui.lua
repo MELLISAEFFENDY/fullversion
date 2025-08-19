@@ -117,6 +117,11 @@ function RayfieldUI.createTabs()
     RayfieldUI.Tabs.EnhancedFishing = RayfieldUI.Window:CreateTab({Name = "⚡ Enhanced Fishing"})
     RayfieldUI.createEnhancedFishingTab()
     
+    -- Enhanced RISK Tab
+    print("📝 Creating Enhanced RISK tab...")
+    RayfieldUI.Tabs.EnhancedRisk = RayfieldUI.Window:CreateTab({Name = "⚠️ Enhanced RISK"})
+    RayfieldUI.createEnhancedRiskTab()
+    
     -- Movement Tab
     print("📝 Creating Movement tab...")
     RayfieldUI.Tabs.Movement = RayfieldUI.Window:CreateTab({Name = "🚶 Movement"})
@@ -459,6 +464,11 @@ function RayfieldUI.createSettingsTab()
         Callback = function(value)
             RayfieldUI.toggleFloatingButton(value)
         end
+    })
+    
+    -- Helper text for floating button
+    tab:CreateLabel({
+        Text = "Left Click: Toggle UI | Right Click: Toggle AutoFish"
     })
 end
 
@@ -822,8 +832,26 @@ function RayfieldUI.createFloatingButton()
             end
         end)
         
-        -- Click to toggle AutoFish
+        -- Click to toggle UI visibility (left click)
         FloatingButton.MouseButton1Click:Connect(function()
+            if not dragging then
+                if RayfieldUI.Window and RayfieldUI.Window.MainFrame then
+                    local currentVisibility = RayfieldUI.Window.MainFrame.Visible
+                    RayfieldUI.Window.MainFrame.Visible = not currentVisibility
+                    
+                    if not currentVisibility then
+                        print("🔸 UI shown from floating button")
+                        FloatingButton.Text = "🎣"
+                    else
+                        print("🔹 UI minimized to floating button")
+                        FloatingButton.Text = "📱"
+                    end
+                end
+            end
+        end)
+        
+        -- Right click to toggle AutoFish
+        FloatingButton.MouseButton2Click:Connect(function()
             if not dragging then
                 if RayfieldUI.modules and RayfieldUI.modules.autofish then
                     local isRunning = RayfieldUI.modules.autofish.isRunning and RayfieldUI.modules.autofish.isRunning() or false
@@ -831,14 +859,12 @@ function RayfieldUI.createFloatingButton()
                     if isRunning then
                         if RayfieldUI.modules.autofish.stop then
                             RayfieldUI.modules.autofish.stop()
-                            FloatingButton.Text = "🎣"
-                            FloatingButton.BackgroundColor3 = Color3.fromRGB(120, 80, 200)
+                            print("🛑 AutoFish stopped via floating button")
                         end
                     else
                         if RayfieldUI.modules.autofish.start then
                             RayfieldUI.modules.autofish.start()
-                            FloatingButton.Text = "🟢"
-                            FloatingButton.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
+                            print("🎣 AutoFish started via floating button")
                         end
                     end
                     
@@ -846,17 +872,9 @@ function RayfieldUI.createFloatingButton()
                     if RayfieldUI.Elements.AutoFishToggle then
                         RayfieldUI.Elements.AutoFishToggle:Set(not isRunning)
                     end
-                end
-            end
-        end)
-        
-        -- Right click to show/hide main UI
-        FloatingButton.MouseButton2Click:Connect(function()
-            if RayfieldUI.Window and RayfieldUI.Window.MainFrame then
-                local currentVisibility = RayfieldUI.Window.MainFrame.Visible
-                RayfieldUI.toggleMenuVisibility(not currentVisibility)
-                if RayfieldUI.Elements.MenuVisibilityToggle then
-                    RayfieldUI.Elements.MenuVisibilityToggle:Set(not currentVisibility)
+                    
+                    -- Update button appearance based on autofish state
+                    RayfieldUI.updateFloatingButtonAppearance()
                 end
             end
         end)
@@ -876,9 +894,41 @@ function RayfieldUI.createFloatingButton()
             }):Play()
         end)
         
-        RayfieldUI.FloatingButton = ScreenGui
-        print("🎯 Floating Button: Created")
+        RayfieldUI.FloatingButton = {
+            ScreenGui = ScreenGui,
+            Button = FloatingButton
+        }
+        
+        print("🎯 Floating Button: Created with UI toggle (Left Click) and AutoFish toggle (Right Click)")
     end)
+end
+
+-- Update Floating Button Appearance
+function RayfieldUI.updateFloatingButtonAppearance()
+    if RayfieldUI.FloatingButton and RayfieldUI.FloatingButton.Button then
+        local button = RayfieldUI.FloatingButton.Button
+        
+        -- Check AutoFish status
+        local isAutoFishRunning = false
+        if RayfieldUI.modules and RayfieldUI.modules.autofish then
+            isAutoFishRunning = RayfieldUI.modules.autofish.isRunning and RayfieldUI.modules.autofish.isRunning() or false
+        end
+        
+        -- Check UI visibility
+        local isUIVisible = true
+        if RayfieldUI.Window and RayfieldUI.Window.MainFrame then
+            isUIVisible = RayfieldUI.Window.MainFrame.Visible
+        end
+        
+        -- Update button appearance based on states
+        if isAutoFishRunning then
+            button.BackgroundColor3 = Color3.fromRGB(80, 200, 120) -- Green for active
+            button.Text = isUIVisible and "🟢" or "🟢"
+        else
+            button.BackgroundColor3 = Color3.fromRGB(120, 80, 200) -- Purple for inactive
+            button.Text = isUIVisible and "🎣" or "📱"
+        end
+    end
 end
 
 -- Enhanced Fishing Tab (Simplified)
@@ -1109,9 +1159,358 @@ function RayfieldUI.createEnhancedFishingTab()
     print("✅ Enhanced Fishing Tab created successfully!")
 end
 
+-- Enhanced RISK Tab (High Risk Exploits)
+function RayfieldUI.createEnhancedRiskTab()
+    local tab = RayfieldUI.Tabs.EnhancedRisk
+    if not tab then 
+        print("❌ Enhanced RISK Tab not found")
+        return 
+    end
+    
+    print("🔧 Creating Enhanced RISK Tab content...")
+    
+    -- WARNING HEADER
+    tab:CreateLabel({
+        Text = "⚠️ WARNING: HIGH RISK EXPLOITS"
+    })
+    
+    tab:CreateLabel({
+        Text = "🚨 These features have HIGH DETECTION RISK!"
+    })
+    
+    tab:CreateLabel({
+        Text = "💀 Use at your own risk - may result in ban!"
+    })
+    
+    tab:CreateLabel({
+        Text = "🛡️ Enable Anti-Detection features before using"
+    })
+    
+    -- Separator
+    tab:CreateLabel({
+        Text = "🎯 Minigame Exploits (VERY HIGH RISK)"
+    })
+    
+    -- Minigame Bypass
+    RayfieldUI.Elements.MinigameBypass = tab:CreateToggle({
+        Name = "🚫 Minigame Bypass",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🚫 Minigame Bypass: " .. (Value and "ENABLED - VERY HIGH RISK!" or "Disabled"))
+            if Value then
+                print("⚠️ WARNING: Bypassing minigames is highly detectable!")
+            end
+            -- TODO: Implement minigame bypass
+        end
+    })
+    
+    -- Perfect Minigame Timing
+    RayfieldUI.Elements.PerfectTiming = tab:CreateToggle({
+        Name = "🎯 Perfect Minigame Timing",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🎯 Perfect Timing: " .. (Value and "ENABLED - HIGH RISK!" or "Disabled"))
+            if Value then
+                print("⚠️ WARNING: Always perfect timing is suspicious!")
+            end
+            -- TODO: Implement perfect timing
+        end
+    })
+    
+    -- Auto Minigame Solver
+    RayfieldUI.Elements.AutoMinigame = tab:CreateToggle({
+        Name = "🤖 Auto Minigame Solver",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🤖 Auto Minigame: " .. (Value and "ENABLED - VERY HIGH RISK!" or "Disabled"))
+            -- TODO: Implement auto solver
+        end
+    })
+    
+    -- Separator
+    tab:CreateLabel({
+        Text = "🔮 Fish Manipulation (VERY HIGH RISK)"
+    })
+    
+    -- Fish Rarity Hack
+    RayfieldUI.Elements.RarityHack = tab:CreateToggle({
+        Name = "💎 Force Rare Fish",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("💎 Rare Fish Hack: " .. (Value and "ENABLED - EXTREME RISK!" or "Disabled"))
+            if Value then
+                print("🚨 EXTREME RISK: This will be very obvious to detection systems!")
+            end
+            -- TODO: Implement rarity manipulation
+        end
+    })
+    
+    -- Fish Weight Manipulation
+    RayfieldUI.Elements.WeightHack = tab:CreateToggle({
+        Name = "⚖️ Force Heavy Fish",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("⚖️ Weight Hack: " .. (Value and "ENABLED - VERY HIGH RISK!" or "Disabled"))
+            -- TODO: Implement weight manipulation
+        end
+    })
+    
+    -- Fish Value Multiplier
+    RayfieldUI.Elements.ValueMultiplier = tab:CreateSlider({
+        Name = "💰 Fish Value Multiplier",
+        Range = {1, 100},
+        Increment = 1,
+        CurrentValue = 1,
+        Callback = function(Value)
+            print("💰 Value Multiplier set to: " .. Value .. "x")
+            if Value > 10 then
+                print("🚨 WARNING: High multipliers are extremely risky!")
+            end
+            -- TODO: Implement value multiplication
+        end
+    })
+    
+    -- Separator
+    tab:CreateLabel({
+        Text = "🎣 Rod & Equipment Hacks (HIGH RISK)"
+    })
+    
+    -- Rod Stats Injection
+    RayfieldUI.Elements.RodStatsHack = tab:CreateToggle({
+        Name = "📊 Inject Impossible Rod Stats",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("📊 Rod Stats Hack: " .. (Value and "ENABLED - VERY HIGH RISK!" or "Disabled"))
+            -- TODO: Implement rod stats injection
+        end
+    })
+    
+    -- Infinite Bait
+    RayfieldUI.Elements.InfiniteBait = tab:CreateToggle({
+        Name = "🪱 Infinite Bait",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🪱 Infinite Bait: " .. (Value and "ENABLED - HIGH RISK!" or "Disabled"))
+            -- TODO: Implement infinite bait
+        end
+    })
+    
+    -- Rod Durability Hack
+    RayfieldUI.Elements.InfiniteDurability = tab:CreateToggle({
+        Name = "🛡️ Infinite Rod Durability",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🛡️ Infinite Durability: " .. (Value and "ENABLED - MEDIUM RISK" or "Disabled"))
+            -- TODO: Implement durability hack
+        end
+    })
+    
+    -- Separator
+    tab:CreateLabel({
+        Text = "⚡ Speed & Performance Hacks (MEDIUM-HIGH RISK)"
+    })
+    
+    -- Extreme Speed Boost
+    RayfieldUI.Elements.ExtremeSpeed = tab:CreateSlider({
+        Name = "🚀 Extreme Fishing Speed",
+        Range = {1, 50},
+        Increment = 1,
+        CurrentValue = 1,
+        Callback = function(Value)
+            print("🚀 Extreme Speed set to: " .. Value .. "x")
+            if Value > 10 then
+                print("⚠️ WARNING: Extreme speeds are highly detectable!")
+            end
+            -- TODO: Implement extreme speed
+        end
+    })
+    
+    -- Cast Distance Hack
+    RayfieldUI.Elements.InfiniteCast = tab:CreateToggle({
+        Name = "🎯 Infinite Cast Distance",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🎯 Infinite Cast: " .. (Value and "ENABLED - HIGH RISK!" or "Disabled"))
+            -- TODO: Implement infinite casting
+        end
+    })
+    
+    -- No Cooldown Hack
+    RayfieldUI.Elements.NoCooldown = tab:CreateToggle({
+        Name = "⏱️ Remove All Cooldowns",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("⏱️ No Cooldowns: " .. (Value and "ENABLED - VERY HIGH RISK!" or "Disabled"))
+            -- TODO: Implement cooldown removal
+        end
+    })
+    
+    -- Separator
+    tab:CreateLabel({
+        Text = "💰 Economy Exploits (EXTREME RISK)"
+    })
+    
+    -- Money Hack
+    RayfieldUI.Elements.MoneyHack = tab:CreateButton({
+        Name = "💸 Add Money (EXTREME RISK)",
+        Callback = function()
+            print("💸 Money Hack executed - EXTREME RISK!")
+            print("🚨 This is the most detectable exploit!")
+            -- TODO: Implement money hack (NOT RECOMMENDED)
+        end
+    })
+    
+    -- Item Duplication
+    RayfieldUI.Elements.ItemDupe = tab:CreateButton({
+        Name = "📦 Duplicate Items (EXTREME RISK)",
+        Callback = function()
+            print("📦 Item Duplication - EXTREME RISK!")
+            -- TODO: Implement item duplication
+        end
+    })
+    
+    -- Unlock All Items
+    RayfieldUI.Elements.UnlockAll = tab:CreateButton({
+        Name = "🔓 Unlock All Items (HIGH RISK)",
+        Callback = function()
+            print("🔓 Unlock All Items - HIGH RISK!")
+            -- TODO: Implement unlock all
+        end
+    })
+    
+    -- Separator
+    tab:CreateLabel({
+        Text = "🛡️ Protection & Monitoring"
+    })
+    
+    -- Auto Disable on Detection
+    RayfieldUI.Elements.AutoDisable = tab:CreateToggle({
+        Name = "🛡️ Auto Disable on Detection Risk",
+        CurrentValue = true,
+        Callback = function(Value)
+            print("🛡️ Auto Protection: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement auto protection
+        end
+    })
+    
+    -- Risk Monitor
+    RayfieldUI.Elements.RiskMonitor = tab:CreateLabel({
+        Text = "🔍 Current Risk Level: EXTREME ⛔"
+    })
+    
+    -- Detection Alerts
+    RayfieldUI.Elements.DetectionAlerts = tab:CreateToggle({
+        Name = "🚨 Detection Risk Alerts",
+        CurrentValue = true,
+        Callback = function(Value)
+            print("🚨 Detection Alerts: " .. (Value and "Enabled" or "Disabled"))
+        end
+    })
+    
+    -- Manual Risk Actions
+    tab:CreateLabel({
+        Text = "🔧 Emergency Actions"
+    })
+    
+    -- Disable All Risk Features
+    tab:CreateButton({
+        Name = "🛑 DISABLE ALL RISK FEATURES",
+        Callback = function()
+            print("🛑 Disabling all risky features...")
+            -- Disable all toggles
+            if RayfieldUI.Elements.MinigameBypass then RayfieldUI.Elements.MinigameBypass:Set(false) end
+            if RayfieldUI.Elements.PerfectTiming then RayfieldUI.Elements.PerfectTiming:Set(false) end
+            if RayfieldUI.Elements.AutoMinigame then RayfieldUI.Elements.AutoMinigame:Set(false) end
+            if RayfieldUI.Elements.RarityHack then RayfieldUI.Elements.RarityHack:Set(false) end
+            if RayfieldUI.Elements.WeightHack then RayfieldUI.Elements.WeightHack:Set(false) end
+            if RayfieldUI.Elements.RodStatsHack then RayfieldUI.Elements.RodStatsHack:Set(false) end
+            if RayfieldUI.Elements.InfiniteBait then RayfieldUI.Elements.InfiniteBait:Set(false) end
+            if RayfieldUI.Elements.InfiniteDurability then RayfieldUI.Elements.InfiniteDurability:Set(false) end
+            if RayfieldUI.Elements.InfiniteCast then RayfieldUI.Elements.InfiniteCast:Set(false) end
+            if RayfieldUI.Elements.NoCooldown then RayfieldUI.Elements.NoCooldown:Set(false) end
+            print("✅ All risky features disabled!")
+        end
+    })
+    
+    -- Reset to Safe Mode
+    tab:CreateButton({
+        Name = "🔄 Reset to Safe Mode",
+        Callback = function()
+            print("🔄 Resetting to safe configuration...")
+            -- Reset all sliders to safe values
+            if RayfieldUI.Elements.ValueMultiplier then RayfieldUI.Elements.ValueMultiplier:Set(1) end
+            if RayfieldUI.Elements.ExtremeSpeed then RayfieldUI.Elements.ExtremeSpeed:Set(1) end
+            print("✅ Reset to safe mode complete!")
+        end
+    })
+    
+    -- Update Risk Level Monitoring
+    spawn(function()
+        while RayfieldUI.autoUpdateEnabled do
+            wait(1)
+            pcall(function()
+                if RayfieldUI.Elements.RiskMonitor then
+                    local riskLevel = "LOW ✅"
+                    local riskColor = "🟢"
+                    local activeRisks = 0
+                    
+                    -- Check active risky features
+                    if RayfieldUI.Elements.MinigameBypass and RayfieldUI.Elements.MinigameBypass.CurrentValue then
+                        activeRisks = activeRisks + 3
+                    end
+                    if RayfieldUI.Elements.RarityHack and RayfieldUI.Elements.RarityHack.CurrentValue then
+                        activeRisks = activeRisks + 5
+                    end
+                    if RayfieldUI.Elements.ValueMultiplier and RayfieldUI.Elements.ValueMultiplier.CurrentValue > 5 then
+                        activeRisks = activeRisks + 2
+                    end
+                    if RayfieldUI.Elements.ExtremeSpeed and RayfieldUI.Elements.ExtremeSpeed.CurrentValue > 10 then
+                        activeRisks = activeRisks + 3
+                    end
+                    
+                    -- Determine risk level
+                    if activeRisks >= 8 then
+                        riskLevel = "EXTREME ⛔"
+                        riskColor = "🔴"
+                    elseif activeRisks >= 5 then
+                        riskLevel = "VERY HIGH 🚨"
+                        riskColor = "🟠"
+                    elseif activeRisks >= 3 then
+                        riskLevel = "HIGH ⚠️"
+                        riskColor = "🟡"
+                    elseif activeRisks >= 1 then
+                        riskLevel = "MEDIUM ⚠️"
+                        riskColor = "🟠"
+                    end
+                    
+                    RayfieldUI.Elements.RiskMonitor:Set({
+                        Text = string.format("🔍 Current Risk Level: %s %s (Active Risks: %d)", 
+                            riskLevel, riskColor, activeRisks)
+                    })
+                end
+            end)
+        end
+    end)
+    
+    -- Final Warning
+    tab:CreateLabel({
+        Text = "💀 FINAL WARNING: These exploits are EXPERIMENTAL"
+    })
+    
+    tab:CreateLabel({
+        Text = "🚫 NOT RECOMMENDED for main accounts"
+    })
+    
+    tab:CreateLabel({
+        Text = "📚 For educational/testing purposes only"
+    })
+    
+    print("✅ Enhanced RISK Tab created successfully!")
+end
+
 function RayfieldUI.destroyFloatingButton()
-    if RayfieldUI.FloatingButton then
-        RayfieldUI.FloatingButton:Destroy()
+    if RayfieldUI.FloatingButton and RayfieldUI.FloatingButton.ScreenGui then
+        RayfieldUI.FloatingButton.ScreenGui:Destroy()
         RayfieldUI.FloatingButton = nil
         print("🎯 Floating Button: Destroyed")
     end

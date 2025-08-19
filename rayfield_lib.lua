@@ -170,6 +170,24 @@ function Window:CreateWindow()
         self:Destroy()
     end)
     
+    -- Minimize Button
+    self.MinimizeButton = Instance.new("TextButton")
+    self.MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+    self.MinimizeButton.Position = UDim2.new(1, -75, 0, 10)
+    self.MinimizeButton.BackgroundColor3 = Color3.fromRGB(120, 80, 200) -- Purple theme
+    self.MinimizeButton.Text = "–"
+    self.MinimizeButton.TextColor3 = Config.Theme.Text
+    self.MinimizeButton.TextSize = 16
+    self.MinimizeButton.Font = Enum.Font.GothamBold
+    self.MinimizeButton.BorderSizePixel = 0
+    self.MinimizeButton.Parent = self.TopBar
+    
+    CreateCorner(self.MinimizeButton, 8)
+    
+    self.MinimizeButton.MouseButton1Click:Connect(function()
+        self:Minimize()
+    end)
+    
     -- Navigation Frame
     self.NavigationFrame = Instance.new("Frame")
     self.NavigationFrame.Name = "NavigationFrame"
@@ -493,6 +511,20 @@ function Window:SelectTab(tab)
     tab.Button.TextColor3 = Config.Theme.Text
     
     self.CurrentTab = tab
+end
+
+function Window:Minimize()
+    if self.MainFrame then
+        self.MainFrame.Visible = false
+        print("🔹 Window minimized to floating button")
+    end
+end
+
+function Window:Show()
+    if self.MainFrame then
+        self.MainFrame.Visible = true
+        print("🔸 Window restored from floating button")
+    end
 end
 
 function Window:Destroy()
