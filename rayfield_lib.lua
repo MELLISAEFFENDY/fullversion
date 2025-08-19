@@ -258,6 +258,34 @@ function Window:CreateTab(options)
     end
     
     -- Tab Functions
+    function Tab:CreateLabel(options)
+        local Label = {}
+        Label.Text = options.Text or "Label"
+        
+        local LabelFrame = Instance.new("TextLabel")
+        LabelFrame.Size = UDim2.new(1, 0, 0, 30)
+        LabelFrame.BackgroundTransparency = 1
+        LabelFrame.Text = Label.Text
+        LabelFrame.TextColor3 = Config.Theme.Text
+        LabelFrame.TextSize = 14
+        LabelFrame.Font = Enum.Font.Gotham
+        LabelFrame.TextXAlignment = Enum.TextXAlignment.Left
+        LabelFrame.BorderSizePixel = 0
+        LabelFrame.Parent = Tab.Content
+        
+        CreatePadding(LabelFrame, 5)
+        
+        function Label:Set(options)
+            if options.Text then
+                Label.Text = options.Text
+                LabelFrame.Text = Label.Text
+            end
+        end
+        
+        table.insert(Tab.Elements, Label)
+        return Label
+    end
+    
     function Tab:CreateButton(options)
         local Button = {}
         Button.Name = options.Name or "Button"
