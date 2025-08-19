@@ -444,6 +444,8 @@ end
 
 -- Create Auto Sell section
 local function createAutoSellSection(parent)
+    if not modules.autosell then return end
+    
     local section = createFrame(parent, {
         Size = UDim2.new(1, 0, 0, 140),
         BackgroundColor3 = colors.dark.background
@@ -458,19 +460,22 @@ local function createAutoSellSection(parent)
     })
     
     -- Auto sell toggle
-    createToggle(section, {
+    local _, sellToggle = createToggle(section, {
         Text = "Enable Auto Sell",
         Position = UDim2.new(0, 5, 0, 25),
-        Enabled = false,
+        Enabled = modules.autosell.getStatus().enabled,
         OnToggle = function(enabled)
-            -- Auto sell functionality will be implemented
-            print("Auto Sell:", enabled and "Enabled" or "Disabled")
+            if enabled then
+                modules.autosell.enable()
+            else
+                modules.autosell.disable()
+            end
         end
     })
     
     -- Threshold label and controls
     local thresholdLabel = createLabel(section, {
-        Text = "Sell Threshold: 50 fish",
+        Text = "Sell Threshold: " .. modules.autosell.getThreshold() .. " fish",
         Position = UDim2.new(0, 10, 0, 75),
         TextSize = 14,
         Font = Enum.Font.SourceSans
@@ -483,8 +488,11 @@ local function createAutoSellSection(parent)
         Position = UDim2.new(0, 10, 0, 95),
         BackgroundColor3 = colors.dark.danger,
         OnClick = function()
-            -- Decrease threshold logic
-            print("Decrease threshold")
+            local currentThreshold = modules.autosell.getThreshold()
+            local newThreshold = math.max(1, currentThreshold - 5)
+            if modules.autosell.setThreshold(newThreshold) then
+                thresholdLabel.Text = "Sell Threshold: " .. newThreshold .. " fish"
+            end
         end
     })
     
@@ -494,8 +502,11 @@ local function createAutoSellSection(parent)
         Position = UDim2.new(0, 45, 0, 95),
         BackgroundColor3 = colors.dark.success,
         OnClick = function()
-            -- Increase threshold logic
-            print("Increase threshold")
+            local currentThreshold = modules.autosell.getThreshold()
+            local newThreshold = math.min(1000, currentThreshold + 5)
+            if modules.autosell.setThreshold(newThreshold) then
+                thresholdLabel.Text = "Sell Threshold: " .. newThreshold .. " fish"
+            end
         end
     })
     
@@ -505,13 +516,15 @@ local function createAutoSellSection(parent)
         Position = UDim2.new(0.55, 0, 0, 95),
         BackgroundColor3 = colors.dark.warning,
         OnClick = function()
-            print("Manual sell triggered")
+            modules.autosell.sellNow()
         end
     })
 end
 
 -- Create Settings section
 local function createSettingsSection(parent)
+    if not modules.security then return end
+    
     local section = createFrame(parent, {
         Size = UDim2.new(1, 0, 0, 100),
         BackgroundColor3 = colors.dark.background
@@ -529,9 +542,13 @@ local function createSettingsSection(parent)
     createToggle(section, {
         Text = "Anti-AFK",
         Position = UDim2.new(0, 5, 0, 25),
-        Enabled = false,
+        Enabled = modules.security.getStatus().antiAfkEnabled,
         OnToggle = function(enabled)
-            print("Anti-AFK:", enabled and "Enabled" or "Disabled")
+            if enabled then
+                modules.security.enableAntiAfk()
+            else
+                modules.security.disableAntiAfk()
+            end
         end
     })
     
@@ -539,9 +556,13 @@ local function createSettingsSection(parent)
     createToggle(section, {
         Text = "Auto Reconnect",
         Position = UDim2.new(0, 5, 0, 65),
-        Enabled = false,
+        Enabled = modules.security.getStatus().autoReconnectEnabled,
         OnToggle = function(enabled)
-            print("Auto Reconnect:", enabled and "Enabled" or "Disabled")
+            if enabled then
+                modules.security.enableAutoReconnect()
+            else
+                modules.security.disableAutoReconnect()
+            end
         end
     })
 end
