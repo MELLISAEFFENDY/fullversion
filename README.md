@@ -33,7 +33,7 @@ Advanced modular autofish script for Roblox fishing games with GitHub integratio
 
 ### Method 1: GitHub Remote Loading
 ```lua
-loadstring(game:HttpGet("https://raw.githubusercontent.com/YourUsername/AutoFishScript/main/main_modular.lua"))()
+loadstring(game:HttpGet("https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/main_modular.lua"))()
 ```
 
 ### Method 2: Local Loading
@@ -127,7 +127,7 @@ MIT License - See LICENSE file for details
 ## 👤 Author
 
 **Spinner_xxx**
-- GitHub: [@YourUsername](https://github.com/YourUsername)
+- GitHub: [@MELLISAEFFENDY](https://github.com/MELLISAEFFENDY)
 
 ---
 ⭐ Star this repo if you find it helpful!
