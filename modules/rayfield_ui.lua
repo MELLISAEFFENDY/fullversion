@@ -97,6 +97,9 @@ function RayfieldUI.init(modules)
         RayfieldUI.startAutoUpdate()
     end
     
+    -- Initialize UI keybind
+    RayfieldUI.toggleUIKeybind(true)
+    
     return RayfieldUI
 end
 
@@ -117,6 +120,10 @@ function RayfieldUI.createTabs()
     -- Security Tab
     RayfieldUI.Tabs.Security = RayfieldUI.Window:CreateTab({Name = "🛡️ Security"})
     RayfieldUI.createSecurityTab()
+    
+    -- Settings Tab
+    RayfieldUI.Tabs.Settings = RayfieldUI.Window:CreateTab({Name = "⚙️ Settings"})
+    RayfieldUI.createSettingsTab()
     
     -- Dashboard Tab
     RayfieldUI.Tabs.Dashboard = RayfieldUI.Window:CreateTab({Name = "📊 Dashboard"})
@@ -361,6 +368,75 @@ function RayfieldUI.createSecurityTab()
     })
 end
 
+-- Settings Tab
+function RayfieldUI.createSettingsTab()
+    local tab = RayfieldUI.Tabs.Settings
+    
+    -- Boost FPS Toggle
+    RayfieldUI.Elements.BoostFPSToggle = tab:CreateToggle({
+        Name = "🚀 Boost FPS",
+        CurrentValue = false,
+        Flag = "BoostFPS",
+        Callback = function(value)
+            RayfieldUI.toggleBoostFPS(value)
+        end
+    })
+    
+    -- HDR Shader Toggle
+    RayfieldUI.Elements.HDRShaderToggle = tab:CreateToggle({
+        Name = "🌈 HDR Shader",
+        CurrentValue = false,
+        Flag = "HDRShader",
+        Callback = function(value)
+            RayfieldUI.toggleHDRShader(value)
+        end
+    })
+    
+    -- Rejoin Server Button
+    RayfieldUI.Elements.RejoinButton = tab:CreateButton({
+        Name = "🔄 Rejoin Server",
+        Callback = function()
+            RayfieldUI.rejoinServer()
+        end
+    })
+    
+    -- Small Server Button
+    RayfieldUI.Elements.SmallServerButton = tab:CreateButton({
+        Name = "👥 Small Server",
+        Callback = function()
+            RayfieldUI.findSmallServer()
+        end
+    })
+    
+    -- Server Hop Button
+    RayfieldUI.Elements.ServerHopButton = tab:CreateButton({
+        Name = "🌐 Server Hop",
+        Callback = function()
+            RayfieldUI.serverHop()
+        end
+    })
+    
+    -- UI Toggle Keybind
+    RayfieldUI.Elements.UIKeybindToggle = tab:CreateToggle({
+        Name = "🎮 UI Toggle (Right Ctrl)",
+        CurrentValue = true,
+        Flag = "UIKeybind",
+        Callback = function(value)
+            RayfieldUI.toggleUIKeybind(value)
+        end
+    })
+    
+    -- Menu Visibility Toggle
+    RayfieldUI.Elements.MenuVisibilityToggle = tab:CreateToggle({
+        Name = "👁️ Show Menu",
+        CurrentValue = true,
+        Flag = "MenuVisibility",
+        Callback = function(value)
+            RayfieldUI.toggleMenuVisibility(value)
+        end
+    })
+end
+
 -- Dashboard Tab
 function RayfieldUI.createDashboardTab()
     local tab = RayfieldUI.Tabs.Dashboard
@@ -452,6 +528,191 @@ end
 function RayfieldUI.setAutoSell(enabled)
     if RayfieldUI.Elements.AutoSellToggle then
         RayfieldUI.Elements.AutoSellToggle:Set(enabled)
+    end
+end
+
+-- Settings Functions
+function RayfieldUI.toggleBoostFPS(enabled)
+    pcall(function()
+        local Lighting = game:GetService("Lighting")
+        local Terrain = workspace.Terrain
+        
+        if enabled then
+            -- Boost FPS settings
+            Lighting.GlobalShadows = false
+            Lighting.FogEnd = 9e9
+            Lighting.Brightness = 0
+            Terrain.WaterWaveSize = 0
+            Terrain.WaterWaveSpeed = 0
+            Terrain.WaterReflectance = 0
+            Terrain.WaterTransparency = 0
+            
+            -- Reduce graphics quality
+            for _, obj in pairs(workspace:GetDescendants()) do
+                if obj:IsA("Part") or obj:IsA("MeshPart") or obj:IsA("UnionOperation") then
+                    obj.Material = Enum.Material.Plastic
+                    obj.Reflectance = 0
+                end
+                if obj:IsA("Decal") or obj:IsA("Texture") then
+                    obj.Transparency = 1
+                end
+            end
+            
+            print("🚀 FPS Boost: Enabled")
+        else
+            -- Restore normal settings
+            Lighting.GlobalShadows = true
+            Lighting.FogEnd = 100000
+            Lighting.Brightness = 1
+            Terrain.WaterWaveSize = 0.15
+            Terrain.WaterWaveSpeed = 10
+            Terrain.WaterReflectance = 0.04
+            Terrain.WaterTransparency = 0.3
+            
+            print("🚀 FPS Boost: Disabled")
+        end
+    end)
+end
+
+function RayfieldUI.toggleHDRShader(enabled)
+    pcall(function()
+        local Lighting = game:GetService("Lighting")
+        
+        if enabled then
+            -- HDR Shader effects
+            local ColorCorrection = Instance.new("ColorCorrectionEffect")
+            ColorCorrection.Name = "HDRShader"
+            ColorCorrection.Brightness = 0.1
+            ColorCorrection.Contrast = 0.2
+            ColorCorrection.Saturation = 0.3
+            ColorCorrection.TintColor = Color3.fromRGB(255, 240, 220)
+            ColorCorrection.Parent = Lighting
+            
+            local Bloom = Instance.new("BloomEffect")
+            Bloom.Name = "HDRBloom"
+            Bloom.Intensity = 0.5
+            Bloom.Size = 25
+            Bloom.Threshold = 1.2
+            Bloom.Parent = Lighting
+            
+            print("🌈 HDR Shader: Enabled")
+        else
+            -- Remove HDR effects
+            if Lighting:FindFirstChild("HDRShader") then
+                Lighting.HDRShader:Destroy()
+            end
+            if Lighting:FindFirstChild("HDRBloom") then
+                Lighting.HDRBloom:Destroy()
+            end
+            
+            print("🌈 HDR Shader: Disabled")
+        end
+    end)
+end
+
+function RayfieldUI.rejoinServer()
+    pcall(function()
+        local TeleportService = game:GetService("TeleportService")
+        local Players = game:GetService("Players")
+        local LocalPlayer = Players.LocalPlayer
+        
+        print("🔄 Rejoining server...")
+        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+    end)
+end
+
+function RayfieldUI.findSmallServer()
+    pcall(function()
+        local TeleportService = game:GetService("TeleportService")
+        local HttpService = game:GetService("HttpService")
+        local Players = game:GetService("Players")
+        
+        print("👥 Finding small server...")
+        
+        local success, servers = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+        end)
+        
+        if success and servers.data then
+            for _, server in pairs(servers.data) do
+                if server.playing < 10 and server.playing > 0 and server.id ~= game.JobId then
+                    print("👥 Found small server with " .. server.playing .. " players")
+                    TeleportService:TeleportToPlaceInstance(game.PlaceId, server.id)
+                    return
+                end
+            end
+        end
+        
+        print("👥 No small server found, rejoining current server")
+        RayfieldUI.rejoinServer()
+    end)
+end
+
+function RayfieldUI.serverHop()
+    pcall(function()
+        local TeleportService = game:GetService("TeleportService")
+        local HttpService = game:GetService("HttpService")
+        local Players = game:GetService("Players")
+        
+        print("🌐 Server hopping...")
+        
+        local success, servers = pcall(function()
+            return HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"))
+        end)
+        
+        if success and servers.data then
+            local randomServer = servers.data[math.random(1, #servers.data)]
+            if randomServer.id ~= game.JobId then
+                print("🌐 Hopping to server with " .. randomServer.playing .. " players")
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, randomServer.id)
+                return
+            end
+        end
+        
+        print("🌐 Server hop failed, rejoining current server")
+        RayfieldUI.rejoinServer()
+    end)
+end
+
+-- UI Keybind system
+RayfieldUI.keybindEnabled = true
+RayfieldUI.keybindConnection = nil
+
+function RayfieldUI.toggleUIKeybind(enabled)
+    RayfieldUI.keybindEnabled = enabled
+    
+    if enabled then
+        if not RayfieldUI.keybindConnection then
+            local UserInputService = game:GetService("UserInputService")
+            
+            RayfieldUI.keybindConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+                if gameProcessed then return end
+                
+                if input.KeyCode == Enum.KeyCode.RightControl then
+                    if RayfieldUI.Window then
+                        local currentVisibility = RayfieldUI.Window.MainFrame.Visible
+                        RayfieldUI.toggleMenuVisibility(not currentVisibility)
+                        if RayfieldUI.Elements.MenuVisibilityToggle then
+                            RayfieldUI.Elements.MenuVisibilityToggle:Set(not currentVisibility)
+                        end
+                    end
+                end
+            end)
+        end
+        print("🎮 UI Keybind: Enabled (Right Ctrl)")
+    else
+        if RayfieldUI.keybindConnection then
+            RayfieldUI.keybindConnection:Disconnect()
+            RayfieldUI.keybindConnection = nil
+        end
+        print("🎮 UI Keybind: Disabled")
+    end
+end
+
+function RayfieldUI.toggleMenuVisibility(visible)
+    if RayfieldUI.Window and RayfieldUI.Window.MainFrame then
+        RayfieldUI.Window.MainFrame.Visible = visible
+        print("👁️ Menu: " .. (visible and "Shown" or "Hidden"))
     end
 end
 
