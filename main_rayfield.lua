@@ -184,35 +184,33 @@ local function initializeAutoFish()
     
     -- Initialize modules in dependency order
     if modules.security then
-        modules.security.init(config.security or {})
+        pcall(function() modules.security.initialize() end)
     end
     
     if modules.fish_tracker then
-        modules.fish_tracker.init()
+        pcall(function() modules.fish_tracker.initialize() end)
     end
 
     if modules.dashboard then
-        modules.dashboard.init(modules)
+        pcall(function() modules.dashboard.initialize(modules) end)
     end
-
+    
     if modules.movement then
-        modules.movement.init(config.movement or {})
+        pcall(function() modules.movement.initialize() end)
     end
-
+    
     if modules.autosell then
-        modules.autosell.init(config.autosell or {})
+        pcall(function() modules.autosell.initialize() end)
     end
     
     if modules.autofish then
-        modules.autofish.init(modules, config.autofish or {})
-    end
-    
-    -- Initialize UI (Rayfield UI or fallback to custom UI)
+        pcall(function() modules.autofish.initialize() end)
+    end    -- Initialize UI (Rayfield UI or fallback to custom UI)
     local uiModule = modules.rayfield_ui or modules.ui
     local uiType = modules.rayfield_ui and "Rayfield" or "Custom"
     
     if uiModule then
-        uiModule.init(modules)
+        pcall(function() uiModule.initialize(modules) end)
         
         -- Show welcome notification
         if uiModule.showNotification then
