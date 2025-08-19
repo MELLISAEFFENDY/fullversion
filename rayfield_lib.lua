@@ -19,7 +19,7 @@ local Config = {
         Background = Color3.fromRGB(20, 20, 20),
         Topbar = Color3.fromRGB(30, 30, 30),
         Card = Color3.fromRGB(25, 25, 25),
-        Accent = Color3.fromRGB(0, 255, 140),
+        Accent = Color3.fromRGB(120, 80, 200),  -- Ungu gelap
         Text = Color3.fromRGB(255, 255, 255),
         SecondaryText = Color3.fromRGB(180, 180, 180)
     },
@@ -281,7 +281,7 @@ function Window:CreateTab(options)
         
         -- Hover effect
         ButtonFrame.MouseEnter:Connect(function()
-            Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(0, 200, 120)}, 0.2)
+            Tween(ButtonFrame, {BackgroundColor3 = Color3.fromRGB(100, 60, 160)}, 0.2)  -- Ungu gelap hover
         end)
         
         ButtonFrame.MouseLeave:Connect(function()

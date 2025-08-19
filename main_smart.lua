@@ -1,5 +1,5 @@
 -- main_smart.lua
--- AutoFish Pro with Smart UI Loading (ORION + Fallback)
+-- AutoFish Pro with Smart UI Loading (Rayfield + Fallback)
 -- Modular system with intelligent UI selection
 
 print("🎣 AutoFish Pro - Smart Edition")
@@ -86,43 +86,43 @@ local function safeLoadModule(moduleName)
     end
 end
 
--- Try to load ORION UI
-local function tryLoadOrionUI()
-    print("🌟 Attempting to load ORION UI...")
+-- Try to load Rayfield UI
+local function tryLoadRayfieldUI()
+    print("🌟 Attempting to load Rayfield UI...")
     
     local success, result = pcall(function()
-        -- Load our custom ORION library first
-        local orionUrl = GITHUB_BASE .. 'orion_lib.lua'
-        print("🌐 Loading ORION library from: " .. orionUrl)
+        -- Load our custom Rayfield library first
+        local rayfieldUrl = GITHUB_BASE .. 'rayfield_lib.lua'
+        print("🌐 Loading Rayfield library from: " .. rayfieldUrl)
         
-        local customOrionLib = loadstring(game:HttpGet(orionUrl))()
+        local customRayfieldLib = loadstring(game:HttpGet(rayfieldUrl))()
         
-        if customOrionLib then
-            print("✅ Custom ORION library loaded")
-            print("🔍 Library type: " .. type(customOrionLib))
-            if customOrionLib.MakeWindow then
-                print("🔍 MakeWindow function found")
+        if customRayfieldLib then
+            print("✅ Custom Rayfield library loaded")
+            print("🔍 Library type: " .. type(customRayfieldLib))
+            if customRayfieldLib.CreateWindow then
+                print("🔍 CreateWindow function found")
             else
-                print("❌ MakeWindow function missing")
+                print("❌ CreateWindow function missing")
             end
             
             -- Store the library globally for modules to use
-            getgenv().OrionLib = customOrionLib
+            getgenv().RayfieldLib = customRayfieldLib
             
-            -- Now load our ORION UI module
-            local orionModule = safeLoadModule("orion_ui")
-            return orionModule
+            -- Now load our Rayfield UI module
+            local rayfieldModule = safeLoadModule("rayfield_ui")
+            return rayfieldModule
         else
-            error("Custom ORION library failed to load - returned nil")
+            error("Custom Rayfield library failed to load - returned nil")
         end
     end)
     
     if success and result then
-        print("✅ ORION UI loaded successfully!")
-        uiType = "ORION"
+        print("✅ Rayfield UI loaded successfully!")
+        uiType = "Rayfield"
         return result
     else
-        print("⚠️ ORION UI failed to load: " .. tostring(result))
+        print("⚠️ Rayfield UI failed to load: " .. tostring(result))
         return nil
     end
 end
@@ -189,8 +189,8 @@ local function initializeAutoFish()
         error("❌ Critical module failed to load: autofish")
     end
     
-    -- Try to load UI (ORION first, then Custom fallback)
-    uiModule = tryLoadOrionUI()
+    -- Try to load UI (Rayfield first, then Custom fallback)
+    uiModule = tryLoadRayfieldUI()
     if not uiModule then
         uiModule = tryLoadCustomUI()
     end
@@ -200,8 +200,8 @@ local function initializeAutoFish()
     end
     
     -- Store UI module in modules table
-    if uiType == "ORION" then
-        modules.orion_ui = uiModule
+    if uiType == "Rayfield" then
+        modules.rayfield_ui = uiModule
     else
         modules.ui = uiModule
     end
@@ -259,10 +259,10 @@ local function safeInit()
     else
         print("❌ Initialization failed: " .. tostring(result))
         
-        -- Don't show error UI if ORION is partially working
+        -- Don't show error UI if Rayfield is partially working
         local hasUI = false
         pcall(function()
-            if game.Players.LocalPlayer.PlayerGui:FindFirstChild("OrionUI") then
+            if game.Players.LocalPlayer.PlayerGui:FindFirstChild("RayfieldUI") then
                 hasUI = true
             end
         end)
