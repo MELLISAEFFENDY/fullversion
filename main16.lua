@@ -4357,31 +4357,10 @@ local function BuildUI()
         end)
     end)
 
-    -- Test Detection Button
-    local testDetectionBtn = Instance.new("TextButton", eventControlsSection)
-    testDetectionBtn.Size = UDim2.new(0, 120, 0, 30)
-    testDetectionBtn.Position = UDim2.new(0, 140, 0, 10)
-    testDetectionBtn.Text = "🧪 Test Detection"
-    testDetectionBtn.Font = Enum.Font.GothamSemibold
-    testDetectionBtn.TextSize = 12
-    testDetectionBtn.BackgroundColor3 = Color3.fromRGB(255,150,50)
-    testDetectionBtn.TextColor3 = Color3.fromRGB(255,255,255)
-    Instance.new("UICorner", testDetectionBtn)
-
-    testDetectionBtn.MouseButton1Click:Connect(function()
-        pcall(function()
-            if TestEventDetection then
-                TestEventDetection()
-            else
-                Notify("🧪 TEST EVENT", "🕳️ Black Hole (TEST) simulated!")
-            end
-        end)
-    end)
-
     -- HTTP Load Button
     local httpLoadBtn = Instance.new("TextButton", eventControlsSection)
     httpLoadBtn.Size = UDim2.new(0, 120, 0, 30)
-    httpLoadBtn.Position = UDim2.new(0, 270, 0, 10)
+    httpLoadBtn.Position = UDim2.new(0, 140, 0, 10)
     httpLoadBtn.Text = "🌐 Reload Detector"
     httpLoadBtn.Font = Enum.Font.GothamSemibold
     httpLoadBtn.TextSize = 12
