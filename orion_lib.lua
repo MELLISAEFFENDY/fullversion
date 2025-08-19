@@ -19,12 +19,18 @@ local Config = {
         SecondaryColor = Color3.fromRGB(35, 35, 35),
         AccentColor = Color3.fromRGB(0, 162, 255),
         TextColor = Color3.fromRGB(255, 255, 255),
-        TabColor = Color3.fromRGB(45, 45, 45)
+        TabColor = Color3.fromRGB(45, 45, 45),
+        FloatingButtonColor = Color3.fromRGB(0, 162, 255)
     },
     Animation = {
         Duration = 0.3,
         Style = Enum.EasingStyle.Quad,
         Direction = Enum.EasingDirection.Out
+    },
+    UI = {
+        BackgroundTransparency = 0.15,
+        WindowDraggable = true,
+        FloatingButton = true
     }
 }
 
@@ -113,10 +119,11 @@ function Window:CreateWindow()
     self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
     self.MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
     self.MainFrame.BackgroundColor3 = Config.Theme.MainColor
+    self.MainFrame.BackgroundTransparency = Config.UI.BackgroundTransparency
     self.MainFrame.BorderSizePixel = 0
     self.MainFrame.Parent = self.ScreenGui
     self.MainFrame.Active = true
-    self.MainFrame.Draggable = true
+    self.MainFrame.Draggable = Config.UI.WindowDraggable
     
     CreateCorner(self.MainFrame, 12)
     CreateStroke(self.MainFrame, Config.Theme.AccentColor, 2)
@@ -126,6 +133,7 @@ function Window:CreateWindow()
     self.TitleBar.Name = "TitleBar"
     self.TitleBar.Size = UDim2.new(1, 0, 0, 40)
     self.TitleBar.BackgroundColor3 = Config.Theme.SecondaryColor
+    self.TitleBar.BackgroundTransparency = Config.UI.BackgroundTransparency
     self.TitleBar.BorderSizePixel = 0
     self.TitleBar.Parent = self.MainFrame
     
@@ -146,7 +154,7 @@ function Window:CreateWindow()
     -- Close Button
     self.CloseButton = Instance.new("TextButton")
     self.CloseButton.Size = UDim2.new(0, 30, 0, 30)
-    self.CloseButton.Position = UDim2.new(1, -40, 0, 5)
+    self.CloseButton.Position = UDim2.new(1, -75, 0, 5)
     self.CloseButton.BackgroundColor3 = Color3.fromRGB(255, 100, 100)
     self.CloseButton.Text = "×"
     self.CloseButton.TextColor3 = Config.Theme.TextColor
@@ -161,12 +169,31 @@ function Window:CreateWindow()
         self:SetVisible(false)
     end)
     
+    -- Minimize Button
+    self.MinimizeButton = Instance.new("TextButton")
+    self.MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+    self.MinimizeButton.Position = UDim2.new(1, -40, 0, 5)
+    self.MinimizeButton.BackgroundColor3 = Color3.fromRGB(255, 200, 100)
+    self.MinimizeButton.Text = "–"
+    self.MinimizeButton.TextColor3 = Config.Theme.TextColor
+    self.MinimizeButton.TextSize = 20
+    self.MinimizeButton.Font = Enum.Font.SourceSansBold
+    self.MinimizeButton.BorderSizePixel = 0
+    self.MinimizeButton.Parent = self.TitleBar
+    
+    CreateCorner(self.MinimizeButton, 6)
+    
+    self.MinimizeButton.MouseButton1Click:Connect(function()
+        self:Minimize()
+    end)
+    
     -- Tab Container
     self.TabContainer = Instance.new("Frame")
     self.TabContainer.Name = "TabContainer"
     self.TabContainer.Size = UDim2.new(0, 150, 1, -50)
     self.TabContainer.Position = UDim2.new(0, 10, 0, 45)
     self.TabContainer.BackgroundColor3 = Config.Theme.SecondaryColor
+    self.TabContainer.BackgroundTransparency = Config.UI.BackgroundTransparency
     self.TabContainer.BorderSizePixel = 0
     self.TabContainer.Parent = self.MainFrame
     
@@ -186,10 +213,16 @@ function Window:CreateWindow()
     self.ContentContainer.Size = UDim2.new(1, -180, 1, -50)
     self.ContentContainer.Position = UDim2.new(0, 170, 0, 45)
     self.ContentContainer.BackgroundColor3 = Config.Theme.SecondaryColor
+    self.ContentContainer.BackgroundTransparency = Config.UI.BackgroundTransparency
     self.ContentContainer.BorderSizePixel = 0
     self.ContentContainer.Parent = self.MainFrame
     
     CreateCorner(self.ContentContainer, 8)
+    
+    -- Create floating button if enabled
+    if Config.UI.FloatingButton then
+        self:CreateFloatingButton()
+    end
 end
 
 function Window:MakeTab(options)
@@ -308,6 +341,7 @@ function Window:MakeTab(options)
         local ToggleFrame = Instance.new("Frame")
         ToggleFrame.Size = UDim2.new(1, 0, 0, 35)
         ToggleFrame.BackgroundColor3 = Config.Theme.TabColor
+        ToggleFrame.BackgroundTransparency = Config.UI.BackgroundTransparency
         ToggleFrame.BorderSizePixel = 0
         ToggleFrame.Parent = Tab.Content
         
@@ -383,6 +417,7 @@ function Window:MakeTab(options)
         local SliderFrame = Instance.new("Frame")
         SliderFrame.Size = UDim2.new(1, 0, 0, 50)
         SliderFrame.BackgroundColor3 = Config.Theme.TabColor
+        SliderFrame.BackgroundTransparency = Config.UI.BackgroundTransparency
         SliderFrame.BorderSizePixel = 0
         SliderFrame.Parent = Tab.Content
         
@@ -481,6 +516,7 @@ function Window:MakeTab(options)
         local DropdownFrame = Instance.new("Frame")
         DropdownFrame.Size = UDim2.new(1, 0, 0, 35)
         DropdownFrame.BackgroundColor3 = Config.Theme.TabColor
+        DropdownFrame.BackgroundTransparency = Config.UI.BackgroundTransparency
         DropdownFrame.BorderSizePixel = 0
         DropdownFrame.Parent = Tab.Content
         
@@ -629,6 +665,127 @@ end
 function Window:SetVisible(visible)
     self.Visible = visible
     self.ScreenGui.Enabled = visible
+    
+    if self.FloatingButton then
+        self.FloatingButton.Visible = not visible
+    end
+end
+
+function Window:Minimize()
+    self.Minimized = not self.Minimized
+    
+    if self.Minimized then
+        -- Store original size and minimize
+        self.OriginalSize = self.MainFrame.Size
+        CreateTween(self.MainFrame, {
+            Size = UDim2.new(0, 300, 0, 40)
+        }):Play()
+        
+        -- Hide containers
+        self.TabContainer.Visible = false
+        self.ContentContainer.Visible = false
+        
+        self.MinimizeButton.Text = "+"
+    else
+        -- Restore original size
+        CreateTween(self.MainFrame, {
+            Size = self.OriginalSize or UDim2.new(0, 600, 0, 400)
+        }):Play()
+        
+        -- Show containers
+        self.TabContainer.Visible = true
+        self.ContentContainer.Visible = true
+        
+        self.MinimizeButton.Text = "–"
+    end
+end
+
+function Window:CreateFloatingButton()
+    -- Create floating button
+    self.FloatingButton = Instance.new("TextButton")
+    self.FloatingButton.Name = "FloatingButton"
+    self.FloatingButton.Size = UDim2.new(0, 60, 0, 60)
+    self.FloatingButton.Position = UDim2.new(1, -80, 0, 20)
+    self.FloatingButton.BackgroundColor3 = Config.Theme.FloatingButtonColor
+    self.FloatingButton.Text = "🎣"
+    self.FloatingButton.TextColor3 = Config.Theme.TextColor
+    self.FloatingButton.TextSize = 24
+    self.FloatingButton.Font = Enum.Font.SourceSansBold
+    self.FloatingButton.BorderSizePixel = 0
+    self.FloatingButton.Visible = false
+    self.FloatingButton.Active = true
+    self.FloatingButton.Draggable = true
+    self.FloatingButton.Parent = self.ScreenGui
+    
+    CreateCorner(self.FloatingButton, 30)
+    CreateStroke(self.FloatingButton, Config.Theme.AccentColor, 2)
+    
+    -- Floating button click
+    self.FloatingButton.MouseButton1Click:Connect(function()
+        self:SetVisible(true)
+    end)
+    
+    -- Floating button hover effects
+    self.FloatingButton.MouseEnter:Connect(function()
+        CreateTween(self.FloatingButton, {
+            Size = UDim2.new(0, 70, 0, 70),
+            BackgroundColor3 = Color3.fromRGB(0, 140, 220)
+        }, 0.2):Play()
+    end)
+    
+    self.FloatingButton.MouseLeave:Connect(function()
+        CreateTween(self.FloatingButton, {
+            Size = UDim2.new(0, 60, 0, 60),
+            BackgroundColor3 = Config.Theme.FloatingButtonColor
+        }, 0.2):Play()
+    end)
+    
+    -- Add tooltip
+    local tooltip = Instance.new("TextLabel")
+    tooltip.Size = UDim2.new(0, 120, 0, 30)
+    tooltip.Position = UDim2.new(0, -130, 0.5, -15)
+    tooltip.BackgroundColor3 = Config.Theme.MainColor
+    tooltip.BackgroundTransparency = 0.1
+    tooltip.Text = "Click to open AutoFish"
+    tooltip.TextColor3 = Config.Theme.TextColor
+    tooltip.TextSize = 12
+    tooltip.Font = Enum.Font.SourceSans
+    tooltip.TextWrapped = true
+    tooltip.BorderSizePixel = 0
+    tooltip.Visible = false
+    tooltip.Parent = self.FloatingButton
+    
+    CreateCorner(tooltip, 4)
+    
+    -- Show tooltip on hover
+    self.FloatingButton.MouseEnter:Connect(function()
+        tooltip.Visible = true
+        CreateTween(tooltip, {BackgroundTransparency = 0.1}, 0.2):Play()
+    end)
+    
+    self.FloatingButton.MouseLeave:Connect(function()
+        CreateTween(tooltip, {BackgroundTransparency = 1}, 0.2):Play()
+        wait(0.2)
+        tooltip.Visible = false
+    end)
+    
+    -- Add pulsing animation
+    spawn(function()
+        while self.FloatingButton do
+            if self.FloatingButton.Visible then
+                CreateTween(self.FloatingButton, {
+                    BackgroundTransparency = 0.3
+                }, 1):Play()
+                wait(1)
+                CreateTween(self.FloatingButton, {
+                    BackgroundTransparency = 0
+                }, 1):Play()
+                wait(1)
+            else
+                wait(0.1)
+            end
+        end
+    end)
 end
 
 -- Notification system
@@ -637,6 +794,7 @@ function OrionLib:MakeNotification(options)
     notification.Size = UDim2.new(0, 300, 0, 80)
     notification.Position = UDim2.new(1, -320, 1, -100)
     notification.BackgroundColor3 = Config.Theme.MainColor
+    notification.BackgroundTransparency = Config.UI.BackgroundTransparency
     notification.BorderSizePixel = 0
     
     if CoreGui:FindFirstChild("OrionNotifications") then
@@ -690,6 +848,32 @@ function OrionLib:Destroy()
     if self.ScreenGui then
         self.ScreenGui:Destroy()
     end
+end
+
+-- Theme management
+function OrionLib:SetTheme(theme)
+    if theme == "Dark" then
+        Config.Theme.MainColor = Color3.fromRGB(15, 15, 15)
+        Config.Theme.SecondaryColor = Color3.fromRGB(25, 25, 25)
+        Config.Theme.AccentColor = Color3.fromRGB(255, 100, 100)
+    elseif theme == "Ocean" then
+        Config.Theme.MainColor = Color3.fromRGB(20, 30, 50)
+        Config.Theme.SecondaryColor = Color3.fromRGB(30, 40, 60)
+        Config.Theme.AccentColor = Color3.fromRGB(100, 200, 255)
+    elseif theme == "Space" then
+        Config.Theme.MainColor = Color3.fromRGB(10, 5, 20)
+        Config.Theme.SecondaryColor = Color3.fromRGB(20, 10, 30)
+        Config.Theme.AccentColor = Color3.fromRGB(200, 100, 255)
+    else -- Default
+        Config.Theme.MainColor = Color3.fromRGB(25, 25, 25)
+        Config.Theme.SecondaryColor = Color3.fromRGB(35, 35, 35)
+        Config.Theme.AccentColor = Color3.fromRGB(0, 162, 255)
+    end
+end
+
+-- Transparency management
+function OrionLib:SetTransparency(transparency)
+    Config.UI.BackgroundTransparency = math.clamp(transparency, 0, 0.8)
 end
 
 -- Main function

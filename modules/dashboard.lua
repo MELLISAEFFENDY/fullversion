@@ -221,6 +221,24 @@ function Dashboard.getSessionStats()
     }
 end
 
+-- Compatibility function for ORION UI
+function Dashboard.getStats()
+    local sessionStats = Dashboard.getSessionStats()
+    local hours = math.floor(sessionStats.sessionTime / 3600)
+    local minutes = math.floor((sessionStats.sessionTime % 3600) / 60)
+    local seconds = math.floor(sessionStats.sessionTime % 60)
+    
+    return {
+        totalFish = sessionStats.fishCount,
+        runtime = string.format("%02d:%02d:%02d", hours, minutes, seconds),
+        fishPerHour = math.floor(sessionStats.fishPerHour),
+        totalValue = math.floor(sessionStats.totalValue),
+        rareCount = sessionStats.rareCount,
+        rarePercentage = math.floor(sessionStats.rarePercentage),
+        currentLocation = sessionStats.currentLocation
+    }
+end
+
 function Dashboard.getLocationStats()
     return Dashboard.locationStats
 end

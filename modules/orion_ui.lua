@@ -33,6 +33,10 @@ OrionUI.Window = nil
 OrionUI.Tabs = {}
 OrionUI.Elements = {}
 
+-- UI State
+OrionUI.autoUpdateEnabled = true
+OrionUI.updateFrequency = 1
+
 -- Configuration
 local config = {
     WindowName = "🎣 AutoFish Pro",
@@ -447,22 +451,26 @@ function OrionUI.createDashboardTab()
     
     -- Statistics Section
     tab:AddSection({
-        Name = "📊 Statistics"
+        Name = "📊 Real-time Statistics"
     })
     
     -- Stats Labels (will be updated dynamically)
     OrionUI.Elements.StatsLabels = {}
     
-    local statLabels = {
-        "Total Fish Caught: 0",
-        "Session Runtime: 00:00:00",
-        "Fish Per Hour: 0",
-        "Total Value Earned: $0"
-    }
+    OrionUI.Elements.StatsLabels[1] = tab:AddLabel("Total Fish Caught: 0")
+    OrionUI.Elements.StatsLabels[2] = tab:AddLabel("Session Runtime: 00:00:00")
+    OrionUI.Elements.StatsLabels[3] = tab:AddLabel("Fish Per Hour: 0")
+    OrionUI.Elements.StatsLabels[4] = tab:AddLabel("Total Value Earned: $0")
+    OrionUI.Elements.StatsLabels[5] = tab:AddLabel("Rare Fish Caught: 0")
+    OrionUI.Elements.StatsLabels[6] = tab:AddLabel("Current Location: Unknown")
     
-    for i, labelText in ipairs(statLabels) do
-        OrionUI.Elements.StatsLabels[i] = tab:AddLabel(labelText)
-    end
+    -- Performance Section
+    tab:AddSection({
+        Name = "📈 Performance Metrics"
+    })
+    
+    OrionUI.Elements.StatsLabels[7] = tab:AddLabel("Rare Fish Percentage: 0%")
+    OrionUI.Elements.StatsLabels[8] = tab:AddLabel("Average Catch Time: 0s")
     
     -- Actions Section
     tab:AddSection({
@@ -471,21 +479,34 @@ function OrionUI.createDashboardTab()
     
     -- Reset Statistics Button
     tab:AddButton({
-        Name = "Reset Statistics",
+        Name = "🔄 Reset Statistics",
         Callback = function()
             if OrionUI.modules.dashboard then
                 OrionUI.modules.dashboard.resetStats()
                 OrionUI.updateDashboard()
+                OrionUI.showNotification("Dashboard", "Statistics reset successfully!", 3)
             end
         end
     })
     
     -- Export Data Button
     tab:AddButton({
-        Name = "Export Data",
+        Name = "📊 Export Data",
         Callback = function()
             if OrionUI.modules.dashboard then
                 OrionUI.modules.dashboard.exportData()
+                OrionUI.showNotification("Dashboard", "Data exported to console!", 3)
+            end
+        end
+    })
+    
+    -- Print Summary Button
+    tab:AddButton({
+        Name = "📋 Print Summary",
+        Callback = function()
+            if OrionUI.modules.dashboard then
+                OrionUI.modules.dashboard.printSummary()
+                OrionUI.showNotification("Dashboard", "Summary printed to console!", 3)
             end
         end
     })
@@ -500,13 +521,126 @@ function OrionUI.createSettingsTab()
         Name = "🎨 UI Settings"
     })
     
+    -- UI Scale Slider
+    tab:AddSlider({
+        Name = "UI Scale",
+        Min = 50,
+        Max = 150,
+        Default = 100,
+        Increment = 10,
+        ValueName = "%",
+        Callback = function(value)
+            local scale = value / 100
+            if OrionUI.Window and OrionUI.Window.MainFrame then
+                OrionUI.Window.MainFrame.Size = UDim2.new(0, 600 * scale, 0, 400 * scale)
+                OrionUI.showNotification("Settings", "UI scale set to " .. value .. "%", 2)
+            end
+        end
+    })
+    
+    -- Transparency Slider
+    tab:AddSlider({
+        Name = "Background Transparency",
+        Min = 0,
+        Max = 80,
+        Default = 15,
+        Increment = 5,
+        ValueName = "%",
+        Callback = function(value)
+            if OrionLib and OrionLib.SetTransparency then
+                OrionLib:SetTransparency(value / 100)
+                OrionUI.showNotification("Settings", "Transparency set to " .. value .. "%", 2)
+            end
+        end
+    })
+    
+    -- Floating Button Toggle
+    tab:AddToggle({
+        Name = "Show Floating Button",
+        Default = true,
+        Callback = function(value)
+            OrionUI.config.floatingButton = value
+            if OrionUI.Window and OrionUI.Window.FloatingButton then
+                OrionUI.Window.FloatingButton.Visible = value and not OrionUI.Window.Visible
+            end
+            OrionUI.showNotification("Settings", "Floating button " .. (value and "enabled" or "disabled"), 2)
+        end
+    })
+    
     -- Theme Dropdown
     tab:AddDropdown({
         Name = "UI Theme",
         Default = "Default",
-        Options = {"Default", "Dark", "Ocean", "Space"},
+        Options = {"Default", "Dark", "Ocean", "Purple", "Green"},
         Callback = function(value)
             OrionUI.setTheme(value)
+        end
+    })
+    
+    -- Window Controls Section
+    tab:AddSection({
+        Name = "🪟 Window Controls"
+    })
+    
+    -- Draggable Toggle
+    tab:AddToggle({
+        Name = "Draggable Window",
+        Default = true,
+        Callback = function(value)
+            if OrionUI.Window and OrionUI.Window.MainFrame then
+                OrionUI.Window.MainFrame.Draggable = value
+                OrionUI.showNotification("Settings", "Window dragging " .. (value and "enabled" or "disabled"), 2)
+            end
+        end
+    })
+    
+    -- Reset Position Button
+    tab:AddButton({
+        Name = "🔄 Reset Window Position",
+        Callback = function()
+            if OrionUI.Window and OrionUI.Window.MainFrame then
+                OrionUI.Window.MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+                OrionUI.showNotification("Settings", "Window position reset!", 2)
+            end
+        end
+    })
+    
+    -- Minimize Button
+    tab:AddButton({
+        Name = "➖ Minimize Window",
+        Callback = function()
+            if OrionUI.Window and OrionUI.Window.Minimize then
+                OrionUI.Window:Minimize()
+            end
+        end
+    })
+    
+    -- Performance Section
+    tab:AddSection({
+        Name = "⚡ Performance"
+    })
+    
+    -- Auto-Update Toggle
+    tab:AddToggle({
+        Name = "Auto-Update Dashboard",
+        Default = true,
+        Callback = function(value)
+            OrionUI.autoUpdateEnabled = value
+            OrionUI.showNotification("Settings", "Auto-update " .. (value and "enabled" or "disabled"), 2)
+        end
+    })
+    
+    -- Update Frequency Slider
+    tab:AddSlider({
+        Name = "Update Frequency",
+        Min = 1,
+        Max = 10,
+        Default = 1,
+        Increment = 1,
+        ValueName = "s",
+        Callback = function(value)
+            OrionUI.updateFrequency = value
+            OrionUI.showNotification("Settings", "Update frequency set to " .. value .. "s", 2)
         end
     })
     
@@ -517,7 +651,7 @@ function OrionUI.createSettingsTab()
     
     -- Save Config Button
     tab:AddButton({
-        Name = "Save Configuration",
+        Name = "💾 Save Configuration",
         Callback = function()
             OrionUI.saveConfig()
         end
@@ -525,7 +659,7 @@ function OrionUI.createSettingsTab()
     
     -- Load Config Button
     tab:AddButton({
-        Name = "Load Configuration",
+        Name = "📁 Load Configuration",
         Callback = function()
             OrionUI.loadConfig()
         end
@@ -533,26 +667,86 @@ function OrionUI.createSettingsTab()
     
     -- Reset Config Button
     tab:AddButton({
-        Name = "Reset to Default",
+        Name = "🔄 Reset to Default",
         Callback = function()
             OrionUI.resetConfig()
         end
     })
     
-    -- Script Info Section
+    -- Script Information Section
     tab:AddSection({
         Name = "ℹ️ Script Information"
     })
     
-    tab:AddLabel("AutoFish Pro v2.0")
-    tab:AddLabel("Built with ORION UI")
-    tab:AddLabel("Modular Architecture")
+    tab:AddLabel("📱 AutoFish Pro v2.0-ORION")
+    tab:AddLabel("🎨 Built with Custom ORION UI")
+    tab:AddLabel("🏗️ Modular Architecture")
+    tab:AddLabel("🎭 Floating Button Support")
+    tab:AddLabel("🌫️ Transparent Background")
+    tab:AddLabel("📅 Last Updated: " .. os.date("%m/%d/%Y"))
     
-    -- Update Button
+    -- System Info Section
+    tab:AddSection({
+        Name = "🖥️ System Information"
+    })
+    
+    tab:AddLabel("🎮 Game: " .. game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+    tab:AddLabel("👤 Player: " .. game.Players.LocalPlayer.Name)
+    tab:AddLabel("🌐 Server ID: " .. string.sub(game.JobId, 1, 8) .. "...")
+    
+    -- Credits Section
+    tab:AddSection({
+        Name = "👥 Credits"
+    })
+    
+    tab:AddLabel("💻 Developer: MELLISAEFFENDY")
+    tab:AddLabel("🎨 UI Library: Custom ORION")
+    tab:AddLabel("📦 Repository: MELLISAEFFENDY/fullversion")
+    tab:AddLabel("🌟 Special Thanks: Community Support")
+    
+    -- Maintenance Section
+    tab:AddSection({
+        Name = "🔧 Maintenance"
+    })
+    
+    -- Check Updates Button
     tab:AddButton({
-        Name = "Check for Updates",
+        Name = "🔍 Check for Updates",
         Callback = function()
             OrionUI.checkForUpdates()
+        end
+    })
+    
+    -- Restart UI Button
+    tab:AddButton({
+        Name = "🔄 Restart UI",
+        Callback = function()
+            OrionUI.showNotification("Settings", "Restarting UI...", 2)
+            wait(1)
+            if OrionUI.Window then
+                OrionUI.Window:SetVisible(false)
+                wait(0.5)
+                OrionUI.Window:SetVisible(true)
+            end
+        end
+    })
+    
+    -- Emergency Stop Button
+    tab:AddButton({
+        Name = "🛑 Emergency Stop All",
+        Callback = function()
+            if OrionUI.modules.autofish then
+                OrionUI.modules.autofish.stop()
+            end
+            if OrionUI.modules.movement then
+                OrionUI.modules.movement.disableFloat()
+                OrionUI.modules.movement.disableNoClip()
+                OrionUI.modules.movement.disableAutoSpinner()
+            end
+            if OrionUI.modules.autosell then
+                OrionUI.modules.autosell.setEnabled(false)
+            end
+            OrionUI.showNotification("Emergency", "All features stopped!", 3)
         end
     })
 end
@@ -576,6 +770,19 @@ function OrionUI.updateDashboard()
         if OrionUI.Elements.StatsLabels[4] then
             OrionUI.Elements.StatsLabels[4]:Set("Total Value Earned: $" .. (stats.totalValue or 0))
         end
+        if OrionUI.Elements.StatsLabels[5] then
+            OrionUI.Elements.StatsLabels[5]:Set("Rare Fish Caught: " .. (stats.rareCount or 0))
+        end
+        if OrionUI.Elements.StatsLabels[6] then
+            OrionUI.Elements.StatsLabels[6]:Set("Current Location: " .. (stats.currentLocation or "Unknown"))
+        end
+        if OrionUI.Elements.StatsLabels[7] then
+            OrionUI.Elements.StatsLabels[7]:Set("Rare Fish Percentage: " .. (stats.rarePercentage or 0) .. "%")
+        end
+        if OrionUI.Elements.StatsLabels[8] then
+            local avgTime = stats.totalFish > 0 and math.floor((stats.sessionTime or 0) / stats.totalFish) or 0
+            OrionUI.Elements.StatsLabels[8]:Set("Average Catch Time: " .. avgTime .. "s")
+        end
     end
 end
 
@@ -583,8 +790,10 @@ end
 function OrionUI.setupAutoUpdates()
     spawn(function()
         while OrionUI.Window do
-            OrionUI.updateDashboard()
-            wait(1) -- Update every second
+            if OrionUI.autoUpdateEnabled then
+                OrionUI.updateDashboard()
+            end
+            wait(OrionUI.updateFrequency or 1) -- Update based on frequency setting
         end
     end)
 end
