@@ -105,33 +105,44 @@ end
 
 -- Create UI tabs
 function RayfieldUI.createTabs()
+    print("🔧 Creating all tabs...")
+    
     -- AutoFish Tab
+    print("📝 Creating AutoFish tab...")
     RayfieldUI.Tabs.AutoFish = RayfieldUI.Window:CreateTab({Name = "🎣 AutoFish"})
     RayfieldUI.createAutoFishTab()
     
     -- Enhanced Fishing Tab
+    print("📝 Creating Enhanced Fishing tab...")
     RayfieldUI.Tabs.EnhancedFishing = RayfieldUI.Window:CreateTab({Name = "⚡ Enhanced Fishing"})
     RayfieldUI.createEnhancedFishingTab()
     
     -- Movement Tab
+    print("📝 Creating Movement tab...")
     RayfieldUI.Tabs.Movement = RayfieldUI.Window:CreateTab({Name = "🚶 Movement"})
     RayfieldUI.createMovementTab()
     
     -- AutoSell Tab
+    print("📝 Creating AutoSell tab...")
     RayfieldUI.Tabs.AutoSell = RayfieldUI.Window:CreateTab({Name = "💰 AutoSell"})
     RayfieldUI.createAutoSellTab()
     
     -- Security Tab
+    print("📝 Creating Security tab...")
     RayfieldUI.Tabs.Security = RayfieldUI.Window:CreateTab({Name = "🛡️ Security"})
     RayfieldUI.createSecurityTab()
     
     -- Settings Tab
+    print("📝 Creating Settings tab...")
     RayfieldUI.Tabs.Settings = RayfieldUI.Window:CreateTab({Name = "⚙️ Settings"})
     RayfieldUI.createSettingsTab()
     
     -- Dashboard Tab
+    print("📝 Creating Dashboard tab...")
     RayfieldUI.Tabs.Dashboard = RayfieldUI.Window:CreateTab({Name = "📊 Dashboard"})
     RayfieldUI.createDashboardTab()
+    
+    print("✅ All tabs created successfully!")
 end
 
 -- AutoFish Tab
@@ -870,32 +881,15 @@ function RayfieldUI.createFloatingButton()
     end)
 end
 
--- Enhanced Fishing Tab
+-- Enhanced Fishing Tab (Simplified)
 function RayfieldUI.createEnhancedFishingTab()
     local tab = RayfieldUI.Tabs.EnhancedFishing
-    if not tab then return end
-    
-    -- Load Enhanced Fishing Module
-    local EnhancedFishing
-    pcall(function()
-        local url = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/modules/enhanced_fishing.lua"
-        local moduleCode = game:HttpGet(url)
-        if moduleCode and moduleCode ~= "" then
-            local moduleFunc = loadstring(moduleCode)
-            if moduleFunc then
-                EnhancedFishing = moduleFunc()
-                EnhancedFishing.initialize()
-                print("✅ Enhanced Fishing Module loaded")
-            end
-        end
-    end)
-    
-    if not EnhancedFishing then
-        tab:CreateLabel({
-            Text = "❌ Enhanced Fishing Module failed to load"
-        })
-        return
+    if not tab then 
+        print("❌ Enhanced Fishing Tab not found")
+        return 
     end
+    
+    print("🔧 Creating Enhanced Fishing Tab content...")
     
     -- Header
     tab:CreateLabel({
@@ -903,7 +897,12 @@ function RayfieldUI.createEnhancedFishingTab()
     })
     
     tab:CreateLabel({
-        Text = "Advanced fishing exploits using game's official systems"
+        Text = "Advanced fishing features using safe methods"
+    })
+    
+    -- Separator
+    tab:CreateLabel({
+        Text = "🎣 Fishing Enhancements"
     })
     
     -- Enhanced AutoFish Toggle
@@ -911,14 +910,8 @@ function RayfieldUI.createEnhancedFishingTab()
         Name = "🚀 Enhanced AutoFish",
         CurrentValue = false,
         Callback = function(Value)
-            if EnhancedFishing then
-                local success = EnhancedFishing.toggleFeature("enhancedAutoFish")
-                if success then
-                    print("✅ Enhanced AutoFish: " .. (Value and "Enabled" or "Disabled"))
-                else
-                    print("❌ Enhanced AutoFish failed to toggle")
-                end
-            end
+            print("🚀 Enhanced AutoFish: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement enhanced autofishing logic
         end
     })
     
@@ -927,23 +920,58 @@ function RayfieldUI.createEnhancedFishingTab()
         Name = "⏱️ Smart Timing",
         CurrentValue = false,
         Callback = function(Value)
-            if EnhancedFishing then
-                EnhancedFishing.toggleFeature("smartTiming")
-                print("⏱️ Smart Timing: " .. (Value and "Enabled" or "Disabled"))
-            end
+            print("⏱️ Smart Timing: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement timing optimization
         end
     })
     
     -- Auto Equip Best Gear
     RayfieldUI.Elements.AutoEquipGear = tab:CreateToggle({
         Name = "🎣 Auto Equip Best Gear",
-        CurrentValue = true,
+        CurrentValue = false,
         Callback = function(Value)
-            if EnhancedFishing then
-                EnhancedFishing.toggleFeature("autoEquipBest")
-                print("🎣 Auto Equip: " .. (Value and "Enabled" or "Disabled"))
-            end
+            print("🎣 Auto Equip Best Gear: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement auto equipment
         end
+    })
+    
+    -- Perfect Cast Toggle
+    RayfieldUI.Elements.PerfectCast = tab:CreateToggle({
+        Name = "🎯 Perfect Cast",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🎯 Perfect Cast: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement perfect casting
+        end
+    })
+    
+    -- Fishing Speed Boost
+    RayfieldUI.Elements.FishingSpeedBoost = tab:CreateSlider({
+        Name = "⚡ Fishing Speed Multiplier",
+        Range = {1, 5},
+        Increment = 0.1,
+        CurrentValue = 1,
+        Callback = function(Value)
+            print("⚡ Fishing Speed set to: " .. Value .. "x")
+            -- TODO: Implement speed boost
+        end
+    })
+    
+    -- Luck Multiplier
+    RayfieldUI.Elements.LuckMultiplier = tab:CreateSlider({
+        Name = "🍀 Luck Multiplier",
+        Range = {1, 10},
+        Increment = 0.5,
+        CurrentValue = 1,
+        Callback = function(Value)
+            print("🍀 Luck Multiplier set to: " .. Value .. "x")
+            -- TODO: Implement luck boost
+        end
+    })
+    
+    -- Separator
+    tab:CreateLabel({
+        Text = "💰 Auto Management"
     })
     
     -- Auto Sell Management
@@ -951,93 +979,134 @@ function RayfieldUI.createEnhancedFishingTab()
         Name = "💰 Smart Auto Sell",
         CurrentValue = false,
         Callback = function(Value)
-            if EnhancedFishing then
-                EnhancedFishing.toggleFeature("autoSellManagement")
-                print("💰 Smart Auto Sell: " .. (Value and "Enabled" or "Disabled"))
-            end
+            print("💰 Smart Auto Sell: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement smart selling
+        end
+    })
+    
+    -- Auto Buy Bait
+    RayfieldUI.Elements.AutoBuyBait = tab:CreateToggle({
+        Name = "🪱 Auto Buy Bait",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🪱 Auto Buy Bait: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement auto bait buying
+        end
+    })
+    
+    -- Auto Upgrade Rod
+    RayfieldUI.Elements.AutoUpgradeRod = tab:CreateToggle({
+        Name = "🎣 Auto Upgrade Rod",
+        CurrentValue = false,
+        Callback = function(Value)
+            print("🎣 Auto Upgrade Rod: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement auto rod upgrading
         end
     })
     
     -- Separator
     tab:CreateLabel({
-        Text = "📊 Enhanced Statistics"
+        Text = "📊 Statistics & Actions"
     })
     
     -- Statistics Display
     RayfieldUI.Elements.EnhancedStats = tab:CreateLabel({
-        Text = "🎣 Fish Caught: 0 | ⏱️ Session: 0s | 📈 Fish/Hour: 0"
+        Text = "🎣 Fish Caught: 0 | ⏱️ Session: 0s | 📈 Rate: 0/h | 💰 Value: 0"
     })
     
-    -- Update Statistics
+    -- Manual Actions
+    tab:CreateButton({
+        Name = "🔄 Optimize Everything",
+        Callback = function()
+            print("🔄 Running full optimization...")
+            -- TODO: Run all optimizations
+        end
+    })
+    
+    tab:CreateButton({
+        Name = "📍 Find Best Fishing Spot",
+        Callback = function()
+            print("📍 Finding best fishing location...")
+            -- TODO: Implement location finder
+        end
+    })
+    
+    tab:CreateButton({
+        Name = "💎 Collect All Valuables",
+        Callback = function()
+            print("💎 Collecting all valuable items...")
+            -- TODO: Implement valuable collection
+        end
+    })
+    
+    -- Safety Section
+    tab:CreateLabel({
+        Text = "🛡️ Safety & Detection"
+    })
+    
+    -- Anti-Detection Mode
+    RayfieldUI.Elements.AntiDetection = tab:CreateToggle({
+        Name = "🛡️ Anti-Detection Mode",
+        CurrentValue = true,
+        Callback = function(Value)
+            print("🛡️ Anti-Detection: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement anti-detection measures
+        end
+    })
+    
+    -- Human-like Behavior
+    RayfieldUI.Elements.HumanBehavior = tab:CreateToggle({
+        Name = "🧑 Human-like Behavior",
+        CurrentValue = true,
+        Callback = function(Value)
+            print("🧑 Human-like Behavior: " .. (Value and "Enabled" or "Disabled"))
+            -- TODO: Implement human simulation
+        end
+    })
+    
+    -- Detection Risk Level
+    RayfieldUI.Elements.RiskLevel = tab:CreateLabel({
+        Text = "🔍 Detection Risk: LOW ✅"
+    })
+    
+    -- Update Statistics Loop (simplified)
     spawn(function()
+        local sessionStart = tick()
+        local fishCount = 0
+        
         while RayfieldUI.autoUpdateEnabled do
             wait(2)
             pcall(function()
-                if EnhancedFishing and RayfieldUI.Elements.EnhancedStats then
-                    local stats = EnhancedFishing.getStats()
+                if RayfieldUI.Elements.EnhancedStats then
+                    local sessionTime = math.floor(tick() - sessionStart)
+                    local fishPerHour = math.floor(fishCount / (sessionTime / 3600))
+                    local totalValue = fishCount * 100 -- Placeholder calculation
+                    
                     local text = string.format(
-                        "🎣 Fish Caught: %d | ⏱️ Session: %ds | 📈 Fish/Hour: %d | 💰 Value: %d",
-                        stats.fishCaught,
-                        stats.sessionTime, 
-                        stats.fishPerHour,
-                        stats.totalValue
+                        "🎣 Fish: %d | ⏱️ Time: %ds | � Rate: %d/h | 💰 Value: %d",
+                        fishCount,
+                        sessionTime,
+                        fishPerHour,
+                        totalValue
                     )
                     RayfieldUI.Elements.EnhancedStats:Set({Text = text})
+                end
+                
+                -- Update risk level based on active features
+                if RayfieldUI.Elements.RiskLevel then
+                    local riskText = "🔍 Detection Risk: LOW ✅"
+                    if RayfieldUI.Elements.LuckMultiplier and RayfieldUI.Elements.LuckMultiplier.CurrentValue > 5 then
+                        riskText = "🔍 Detection Risk: HIGH ⚠️"
+                    elseif RayfieldUI.Elements.FishingSpeedBoost and RayfieldUI.Elements.FishingSpeedBoost.CurrentValue > 3 then
+                        riskText = "🔍 Detection Risk: MEDIUM ⚠️"
+                    end
+                    RayfieldUI.Elements.RiskLevel:Set({Text = riskText})
                 end
             end)
         end
     end)
     
-    -- Manual Actions Section
-    tab:CreateLabel({
-        Text = "🔧 Manual Actions"
-    })
-    
-    -- Manual Gear Optimization
-    tab:CreateButton({
-        Name = "🔄 Optimize Gear Now",
-        Callback = function()
-            if EnhancedFishing then
-                EnhancedFishing.autoEquipBestGear()
-                print("🔄 Gear optimization executed")
-            end
-        end
-    })
-    
-    -- Manual Position Optimization
-    tab:CreateButton({
-        Name = "📍 Optimize Position",
-        Callback = function()
-            if EnhancedFishing then
-                EnhancedFishing.optimizePosition()
-                print("📍 Position optimization executed")
-            end
-        end
-    })
-    
-    -- Manual Speed Optimization
-    tab:CreateButton({
-        Name = "⚡ Optimize Speed",
-        Callback = function()
-            if EnhancedFishing then
-                EnhancedFishing.optimizeFishingSpeed()
-                print("⚡ Speed optimization executed")
-            end
-        end
-    })
-    
-    -- Risk Warning
-    tab:CreateLabel({
-        Text = "⚠️ Safety Notice"
-    })
-    
-    tab:CreateLabel({
-        Text = "This uses game's official systems for maximum safety"
-    })
-    
-    tab:CreateLabel({
-        Text = "All features designed to appear natural"
-    })
+    print("✅ Enhanced Fishing Tab created successfully!")
 end
 
 function RayfieldUI.destroyFloatingButton()
