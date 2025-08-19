@@ -5,6 +5,42 @@
 print("🎣 AutoFish Pro - Smart Edition")
 print("Attempting to load with best available UI...")
 
+-- Suppress script errors from showing in UI
+pcall(function()
+    local StarterGui = game:GetService("StarterGui")
+    StarterGui:SetCore("ChatMakeSystemMessage", {
+        Text = "AutoFish Pro loading...";
+        Color = Color3.fromRGB(100, 255, 100);
+        Font = Enum.Font.SourceSansBold;
+        FontSize = Enum.FontSize.Size18;
+    })
+end)
+
+-- Global error handler to suppress error popups
+local originalError = error
+local errorSuppressed = false
+
+local function suppressErrors()
+    if not errorSuppressed then
+        errorSuppressed = true
+        -- Override error function to prevent popups
+        getgenv().error = function(msg, level)
+            print("⚠️ Suppressed error: " .. tostring(msg))
+        end
+    end
+end
+
+-- Restore error function after loading
+local function restoreErrors()
+    if errorSuppressed then
+        getgenv().error = originalError
+        errorSuppressed = false
+    end
+end
+
+-- Suppress errors during loading
+suppressErrors()
+
 -- GitHub Repository Configuration
 local GITHUB_BASE = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/"
 
@@ -209,52 +245,62 @@ local function safeInit()
     else
         print("❌ Initialization failed: " .. tostring(result))
         
-        -- Show error in simple UI if everything fails
-        local screenGui = Instance.new("ScreenGui")
-        screenGui.Name = "AutoFishError"
-        screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
-        
-        local frame = Instance.new("Frame")
-        frame.Size = UDim2.new(0, 400, 0, 200)
-        frame.Position = UDim2.new(0.5, -200, 0.5, -100)
-        frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-        frame.BorderSizePixel = 2
-        frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
-        frame.Parent = screenGui
-        
-        local title = Instance.new("TextLabel")
-        title.Size = UDim2.new(1, 0, 0, 40)
-        title.BackgroundTransparency = 1
-        title.Text = "❌ AutoFish Pro - Error"
-        title.TextColor3 = Color3.fromRGB(255, 255, 255)
-        title.TextScaled = true
-        title.Font = Enum.Font.SourceSansBold
-        title.Parent = frame
-        
-        local message = Instance.new("TextLabel")
-        message.Size = UDim2.new(1, -20, 1, -80)
-        message.Position = UDim2.new(0, 10, 0, 40)
-        message.BackgroundTransparency = 1
-        message.Text = "Failed to load AutoFish Pro.\n\nError: " .. tostring(result) .. "\n\nPlease check your internet connection and try again."
-        message.TextColor3 = Color3.fromRGB(255, 255, 255)
-        message.TextScaled = true
-        message.Font = Enum.Font.SourceSans
-        message.TextWrapped = true
-        message.Parent = frame
-        
-        local closeButton = Instance.new("TextButton")
-        closeButton.Size = UDim2.new(0, 100, 0, 30)
-        closeButton.Position = UDim2.new(0.5, -50, 1, -35)
-        closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-        closeButton.Text = "Close"
-        closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        closeButton.TextScaled = true
-        closeButton.Font = Enum.Font.SourceSansBold
-        closeButton.Parent = frame
-        
-        closeButton.MouseButton1Click:Connect(function()
-            screenGui:Destroy()
+        -- Don't show error UI if ORION is partially working
+        local hasUI = false
+        pcall(function()
+            if game.Players.LocalPlayer.PlayerGui:FindFirstChild("OrionUI") then
+                hasUI = true
+            end
         end)
+        
+        if not hasUI then
+            -- Show error in simple UI only if no UI is present
+            local screenGui = Instance.new("ScreenGui")
+            screenGui.Name = "AutoFishError"
+            screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+            
+            local frame = Instance.new("Frame")
+            frame.Size = UDim2.new(0, 400, 0, 200)
+            frame.Position = UDim2.new(0.5, -200, 0.5, -100)
+            frame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            frame.BorderSizePixel = 2
+            frame.BorderColor3 = Color3.fromRGB(255, 0, 0)
+            frame.Parent = screenGui
+            
+            local title = Instance.new("TextLabel")
+            title.Size = UDim2.new(1, 0, 0, 40)
+            title.BackgroundTransparency = 1
+            title.Text = "❌ AutoFish Pro - Error"
+            title.TextColor3 = Color3.fromRGB(255, 255, 255)
+            title.TextScaled = true
+            title.Font = Enum.Font.SourceSansBold
+            title.Parent = frame
+            
+            local message = Instance.new("TextLabel")
+            message.Size = UDim2.new(1, -20, 1, -80)
+            message.Position = UDim2.new(0, 10, 0, 40)
+            message.BackgroundTransparency = 1
+            message.Text = "Failed to load AutoFish Pro.\n\nError: " .. tostring(result) .. "\n\nPlease check your internet connection and try again."
+            message.TextColor3 = Color3.fromRGB(255, 255, 255)
+            message.TextScaled = true
+            message.Font = Enum.Font.SourceSans
+            message.TextWrapped = true
+            message.Parent = frame
+            
+            local closeButton = Instance.new("TextButton")
+            closeButton.Size = UDim2.new(0, 100, 0, 30)
+            closeButton.Position = UDim2.new(0.5, -50, 1, -35)
+            closeButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+            closeButton.Text = "Close"
+            closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            closeButton.TextScaled = true
+            closeButton.Font = Enum.Font.SourceSansBold
+            closeButton.Parent = frame
+            
+            closeButton.MouseButton1Click:Connect(function()
+                screenGui:Destroy()
+            end)
+        end
         
         return nil
     end
@@ -273,6 +319,9 @@ end)
 
 -- Initialize the system
 local loadedModules = safeInit()
+
+-- Restore error handling after initialization
+restoreErrors()
 
 -- Export for external access
 getgenv().AutoFishPro = {

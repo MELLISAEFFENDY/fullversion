@@ -878,7 +878,16 @@ end
 
 -- Main function
 function OrionLib:MakeWindow(options)
-    return Window:new(options)
+    local success, window = pcall(function()
+        return Window:new(options)
+    end)
+    
+    if success and window then
+        return window
+    else
+        print("⚠️ Warning: Failed to create ORION window: " .. tostring(window))
+        return nil
+    end
 end
 
 return OrionLib

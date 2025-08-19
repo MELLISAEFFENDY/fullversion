@@ -51,22 +51,42 @@ local config = {
 function OrionUI.init(modules)
     OrionUI.modules = modules
     
-    -- Create main window
-    OrionUI.Window = OrionLib:MakeWindow({
-        Name = config.WindowName,
-        HidePremium = false,
-        SaveConfig = config.SaveConfig,
-        ConfigFolder = config.ConfigFolder,
-        IntroEnabled = config.IntroEnabled,
-        IntroText = config.IntroText,
-        IntroIcon = config.Icon
-    })
+    -- Create main window with error handling
+    local success, window = pcall(function()
+        return OrionLib:MakeWindow({
+            Name = config.WindowName,
+            HidePremium = false,
+            SaveConfig = config.SaveConfig,
+            ConfigFolder = config.ConfigFolder,
+            IntroEnabled = config.IntroEnabled,
+            IntroText = config.IntroText,
+            IntroIcon = config.Icon
+        })
+    end)
     
-    -- Create tabs
-    OrionUI.createTabs()
+    if not success or not window then
+        error("Failed to create ORION window: " .. tostring(window))
+    end
     
-    -- Setup auto-updates
-    OrionUI.setupAutoUpdates()
+    OrionUI.Window = window
+    
+    -- Create tabs with error handling
+    local tabSuccess, tabError = pcall(function()
+        OrionUI.createTabs()
+    end)
+    
+    if not tabSuccess then
+        print("⚠️ Warning: Failed to create some tabs: " .. tostring(tabError))
+    end
+    
+    -- Setup auto-updates with error handling
+    local updateSuccess, updateError = pcall(function()
+        OrionUI.setupAutoUpdates()
+    end)
+    
+    if not updateSuccess then
+        print("⚠️ Warning: Failed to setup auto-updates: " .. tostring(updateError))
+    end
     
     print("✅ ORION UI initialized successfully!")
     return OrionUI.Window
@@ -128,54 +148,70 @@ end
 -- AutoFish Tab Content
 function OrionUI.createAutoFishTab()
     local tab = OrionUI.Tabs.AutoFish
+    if not tab then
+        print("⚠️ AutoFish tab not found")
+        return
+    end
     
-    -- Main Controls Section
-    tab:AddSection({
-        Name = "🎣 Main Controls"
-    })
+    -- Main Controls Section with error handling
+    pcall(function()
+        tab:AddSection({
+            Name = "🎣 Main Controls"
+        })
+    end)
     
-    -- AutoFish Toggle
-    OrionUI.Elements.AutoFishToggle = tab:AddToggle({
-        Name = "Enable AutoFish",
-        Default = false,
-        Callback = function(value)
-            if OrionUI.modules.autofish then
-                if value then
-                    OrionUI.modules.autofish.start()
-                else
-                    OrionUI.modules.autofish.stop()
+    -- AutoFish Toggle with nil checks
+    pcall(function()
+        OrionUI.Elements.AutoFishToggle = tab:AddToggle({
+            Name = "Enable AutoFish",
+            Default = false,
+            Callback = function(value)
+                if OrionUI.modules and OrionUI.modules.autofish then
+                    if value then
+                        if OrionUI.modules.autofish.start then
+                            OrionUI.modules.autofish.start()
+                        end
+                    else
+                        if OrionUI.modules.autofish.stop then
+                            OrionUI.modules.autofish.stop()
+                        end
+                    end
                 end
             end
-        end
-    })
+        })
+    end)
     
-    -- Fishing Mode Dropdown
-    OrionUI.Elements.FishingMode = tab:AddDropdown({
-        Name = "Fishing Mode",
-        Default = "Smart",
-        Options = {"Smart", "Secure", "Fast", "Stealth"},
-        Callback = function(value)
-            if OrionUI.modules.autofish then
-                OrionUI.modules.autofish.setMode(value)
+    -- Fishing Mode Dropdown with nil checks
+    pcall(function()
+        OrionUI.Elements.FishingMode = tab:AddDropdown({
+            Name = "Fishing Mode",
+            Default = "Smart",
+            Options = {"Smart", "Secure", "Fast", "Stealth"},
+            Callback = function(value)
+                if OrionUI.modules and OrionUI.modules.autofish and OrionUI.modules.autofish.setMode then
+                    OrionUI.modules.autofish.setMode(value)
+                end
             end
-        end
-    })
+        })
+    end)
     
-    -- Cast Power Slider
-    OrionUI.Elements.CastPower = tab:AddSlider({
-        Name = "Cast Power",
-        Min = 50,
-        Max = 100,
-        Default = 85,
-        Color = Color3.fromRGB(255, 255, 255),
-        Increment = 5,
-        ValueName = "%",
-        Callback = function(value)
-            if OrionUI.modules.autofish then
-                OrionUI.modules.autofish.setCastPower(value)
+    -- Cast Power Slider with nil checks
+    pcall(function()
+        OrionUI.Elements.CastPower = tab:AddSlider({
+            Name = "Cast Power",
+            Min = 50,
+            Max = 100,
+            Default = 85,
+            Color = Color3.fromRGB(255, 255, 255),
+            Increment = 5,
+            ValueName = "%",
+            Callback = function(value)
+                if OrionUI.modules and OrionUI.modules.autofish and OrionUI.modules.autofish.setCastPower then
+                    OrionUI.modules.autofish.setCastPower(value)
+                end
             end
-        end
-    })
+        })
+    end)
     
     -- Advanced Settings Section
     tab:AddSection({
@@ -753,30 +789,44 @@ end
 
 -- Update dashboard with real-time data
 function OrionUI.updateDashboard()
-    if not OrionUI.modules.dashboard then return end
+    -- Add comprehensive nil checks
+    if not OrionUI.modules or not OrionUI.modules.dashboard then 
+        return 
+    end
     
-    local stats = OrionUI.modules.dashboard.getStats()
+    local success, stats = pcall(function()
+        return OrionUI.modules.dashboard.getStats()
+    end)
+    
+    if not success or not stats then
+        return
+    end
     
     if OrionUI.Elements.StatsLabels then
-        if OrionUI.Elements.StatsLabels[1] then
-            OrionUI.Elements.StatsLabels[1]:Set("Total Fish Caught: " .. (stats.totalFish or 0))
+        -- Safely update each stat with error handling
+        for i = 1, 7 do
+            pcall(function()
+                if OrionUI.Elements.StatsLabels[i] and OrionUI.Elements.StatsLabels[i].Set then
+                    if i == 1 then
+                        OrionUI.Elements.StatsLabels[i]:Set("Total Fish Caught: " .. (stats.totalFish or 0))
+                    elseif i == 2 then
+                        OrionUI.Elements.StatsLabels[i]:Set("Session Runtime: " .. (stats.runtime or "00:00:00"))
+                    elseif i == 3 then
+                        OrionUI.Elements.StatsLabels[i]:Set("Fish Per Hour: " .. (stats.fishPerHour or 0))
+                    elseif i == 4 then
+                        OrionUI.Elements.StatsLabels[i]:Set("Total Value Earned: $" .. (stats.totalValue or 0))
+                    elseif i == 5 then
+                        OrionUI.Elements.StatsLabels[i]:Set("Rare Fish Caught: " .. (stats.rareCount or 0))
+                    elseif i == 6 then
+                        OrionUI.Elements.StatsLabels[i]:Set("Current Location: " .. (stats.currentLocation or "Unknown"))
+                    elseif i == 7 then
+                        OrionUI.Elements.StatsLabels[i]:Set("Rare Fish Rate: " .. (stats.rarePercentage or 0) .. "%")
+                    end
+                end
+            end)
         end
-        if OrionUI.Elements.StatsLabels[2] then
-            OrionUI.Elements.StatsLabels[2]:Set("Session Runtime: " .. (stats.runtime or "00:00:00"))
-        end
-        if OrionUI.Elements.StatsLabels[3] then
-            OrionUI.Elements.StatsLabels[3]:Set("Fish Per Hour: " .. (stats.fishPerHour or 0))
-        end
-        if OrionUI.Elements.StatsLabels[4] then
-            OrionUI.Elements.StatsLabels[4]:Set("Total Value Earned: $" .. (stats.totalValue or 0))
-        end
-        if OrionUI.Elements.StatsLabels[5] then
-            OrionUI.Elements.StatsLabels[5]:Set("Rare Fish Caught: " .. (stats.rareCount or 0))
-        end
-        if OrionUI.Elements.StatsLabels[6] then
-            OrionUI.Elements.StatsLabels[6]:Set("Current Location: " .. (stats.currentLocation or "Unknown"))
-        end
-        if OrionUI.Elements.StatsLabels[7] then
+    end
+end
             OrionUI.Elements.StatsLabels[7]:Set("Rare Fish Percentage: " .. (stats.rarePercentage or 0) .. "%")
         end
         if OrionUI.Elements.StatsLabels[8] then
