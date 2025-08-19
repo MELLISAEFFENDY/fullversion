@@ -123,46 +123,70 @@ function RayfieldUI.createTabs()
     print("🔧 Creating all tabs...")
     
     -- AutoFish Tab
-    print("📝 Creating AutoFish tab...")
-    RayfieldUI.Tabs.AutoFish = RayfieldUI.Window:CreateTab({Name = "🎣 AutoFish"})
-    RayfieldUI.createAutoFishTab()
+    pcall(function()
+        print("📝 Creating AutoFish tab...")
+        RayfieldUI.Tabs.AutoFish = RayfieldUI.Window:CreateTab({Name = "🎣 AutoFish"})
+        RayfieldUI.createAutoFishTab()
+        print("✅ AutoFish tab created")
+    end)
     
     -- Enhanced Fishing Tab
-    print("📝 Creating Enhanced Fishing tab...")
-    RayfieldUI.Tabs.EnhancedFishing = RayfieldUI.Window:CreateTab({Name = "⚡ Enhanced Fishing"})
-    RayfieldUI.createEnhancedFishingTab()
+    pcall(function()
+        print("📝 Creating Enhanced Fishing tab...")
+        RayfieldUI.Tabs.EnhancedFishing = RayfieldUI.Window:CreateTab({Name = "⚡ Enhanced Fishing"})
+        RayfieldUI.createEnhancedFishingTab()
+        print("✅ Enhanced Fishing tab created")
+    end)
     
     -- Enhanced RISK Tab
-    print("📝 Creating Enhanced RISK tab...")
-    RayfieldUI.Tabs.EnhancedRisk = RayfieldUI.Window:CreateTab({Name = "⚠️ Enhanced RISK"})
-    RayfieldUI.createEnhancedRiskTab()
+    pcall(function()
+        print("📝 Creating Enhanced RISK tab...")
+        RayfieldUI.Tabs.EnhancedRisk = RayfieldUI.Window:CreateTab({Name = "⚠️ Enhanced RISK"})
+        RayfieldUI.createEnhancedRiskTab()
+        print("✅ Enhanced RISK tab created")
+    end)
     
     -- Movement Tab
-    print("📝 Creating Movement tab...")
-    RayfieldUI.Tabs.Movement = RayfieldUI.Window:CreateTab({Name = "🚶 Movement"})
-    RayfieldUI.createMovementTab()
+    pcall(function()
+        print("📝 Creating Movement tab...")
+        RayfieldUI.Tabs.Movement = RayfieldUI.Window:CreateTab({Name = "🚶 Movement"})
+        RayfieldUI.createMovementTab()
+        print("✅ Movement tab created")
+    end)
     
     -- AutoSell Tab
-    print("📝 Creating AutoSell tab...")
-    RayfieldUI.Tabs.AutoSell = RayfieldUI.Window:CreateTab({Name = "💰 AutoSell"})
-    RayfieldUI.createAutoSellTab()
+    pcall(function()
+        print("📝 Creating AutoSell tab...")
+        RayfieldUI.Tabs.AutoSell = RayfieldUI.Window:CreateTab({Name = "💰 AutoSell"})
+        RayfieldUI.createAutoSellTab()
+        print("✅ AutoSell tab created")
+    end)
     
     -- Security Tab
-    print("📝 Creating Security tab...")
-    RayfieldUI.Tabs.Security = RayfieldUI.Window:CreateTab({Name = "🛡️ Security"})
-    RayfieldUI.createSecurityTab()
+    pcall(function()
+        print("📝 Creating Security tab...")
+        RayfieldUI.Tabs.Security = RayfieldUI.Window:CreateTab({Name = "🛡️ Security"})
+        RayfieldUI.createSecurityTab()
+        print("✅ Security tab created")
+    end)
     
     -- Settings Tab
-    print("📝 Creating Settings tab...")
-    RayfieldUI.Tabs.Settings = RayfieldUI.Window:CreateTab({Name = "⚙️ Settings"})
-    RayfieldUI.createSettingsTab()
+    pcall(function()
+        print("📝 Creating Settings tab...")
+        RayfieldUI.Tabs.Settings = RayfieldUI.Window:CreateTab({Name = "⚙️ Settings"})
+        RayfieldUI.createSettingsTab()
+        print("✅ Settings tab created")
+    end)
     
     -- Dashboard Tab
-    print("📝 Creating Dashboard tab...")
-    RayfieldUI.Tabs.Dashboard = RayfieldUI.Window:CreateTab({Name = "📊 Dashboard"})
-    RayfieldUI.createDashboardTab()
+    pcall(function()
+        print("📝 Creating Dashboard tab...")
+        RayfieldUI.Tabs.Dashboard = RayfieldUI.Window:CreateTab({Name = "📊 Dashboard"})
+        RayfieldUI.createDashboardTab()
+        print("✅ Dashboard tab created")
+    end)
     
-    print("✅ All tabs created successfully!")
+    print("✅ All tabs creation completed!")
 end
 
 -- AutoFish Tab
@@ -170,151 +194,204 @@ function RayfieldUI.createAutoFishTab()
     local tab = RayfieldUI.Tabs.AutoFish
     local autofish = RayfieldUI.modules.autofish
     
+    if not tab then
+        print("❌ AutoFish tab not created")
+        return
+    end
+    
     if not autofish then
+        print("❌ AutoFish module not available")
         tab:CreateButton({
-            Name = "❌ AutoFish Module Not Available",
+            Name = "AutoFish Module Not Available",
             Callback = function() end
         })
         return
     end
     
-    -- AutoFish Toggle
-    RayfieldUI.Elements.AutoFishToggle = tab:CreateToggle({
-        Name = "Enable AutoFish",
-        CurrentValue = false,
-        Flag = "AutoFishEnabled",
-        Callback = function(value)
-            if value then
-                if autofish.start then
-                    autofish.start()
-                end
-            else
-                if autofish.stop then
-                    autofish.stop()
-                end
-            end
-        end
-    })
+    print("✅ AutoFish tab and module available, creating controls...")
     
     -- Info section
-    tab:CreateLabel({
-        Text = "⚙️ AutoFish Configuration"
-    })
+    pcall(function()
+        tab:CreateLabel({
+            Text = "AutoFish Configuration"
+        })
+    end)
+    
+    -- AutoFish Toggle
+    pcall(function()
+        RayfieldUI.Elements.AutoFishToggle = tab:CreateToggle({
+            Name = "Enable AutoFish",
+            CurrentValue = false,
+            Flag = "AutoFishEnabled",
+            Callback = function(value)
+                if value then
+                    if autofish.start then
+                        autofish.start()
+                    end
+                else
+                    if autofish.stop then
+                        autofish.stop()
+                    end
+                end
+            end
+        })
+        print("✅ AutoFish toggle created")
+    end)
     
     -- Cast Power Slider
-    RayfieldUI.Elements.CastPowerSlider = tab:CreateSlider({
-        Name = "Cast Power",
-        Range = {10, 100},
-        Increment = 5,
-        CurrentValue = 75,
-        Flag = "CastPower",
-        Callback = function(value)
-            if autofish.setCastPower then
-                autofish.setCastPower(value)
+    pcall(function()
+        RayfieldUI.Elements.CastPowerSlider = tab:CreateSlider({
+            Name = "Cast Power",
+            Range = {10, 100},
+            Increment = 5,
+            CurrentValue = 75,
+            Flag = "CastPower",
+            Callback = function(value)
+                if autofish.setCastPower then
+                    autofish.setCastPower(value)
+                end
             end
-        end
-    })
+        })
+        print("✅ Cast power slider created")
+    end)
     
     -- Auto Cast Toggle
-    RayfieldUI.Elements.AutoCastToggle = tab:CreateToggle({
-        Name = "Auto Cast",
-        CurrentValue = true,
-        Flag = "AutoCast",
-        Callback = function(value)
-            if autofish.setAutoCast then
-                autofish.setAutoCast(value)
+    pcall(function()
+        RayfieldUI.Elements.AutoCastToggle = tab:CreateToggle({
+            Name = "Auto Cast",
+            CurrentValue = true,
+            Flag = "AutoCast",
+            Callback = function(value)
+                if autofish.setAutoCast then
+                    autofish.setAutoCast(value)
+                end
             end
-        end
-    })
+        })
+        print("✅ Auto cast toggle created")
+    end)
     
     -- Fish Detection Toggle
-    RayfieldUI.Elements.FishDetectionToggle = tab:CreateToggle({
-        Name = "Fish Detection",
-        CurrentValue = true,
-        Flag = "FishDetection",
-        Callback = function(value)
-            if autofish.setFishDetection then
-                autofish.setFishDetection(value)
+    pcall(function()
+        RayfieldUI.Elements.FishDetectionToggle = tab:CreateToggle({
+            Name = "Fish Detection",
+            CurrentValue = true,
+            Flag = "FishDetection",
+            Callback = function(value)
+                if autofish.setFishDetection then
+                    autofish.setFishDetection(value)
+                end
             end
-        end
-    })
+        })
+        print("✅ Fish detection toggle created")
+    end)
     
-    -- AutoFish Mode Dropdown
-    RayfieldUI.Elements.AutoFishModeDropdown = tab:CreateDropdown({
-        Name = "🧠 AutoFish Mode",
-        Options = {"Smart", "Secure"},
-        CurrentOption = "Smart",
-        Flag = "AutoFishMode",
-        Callback = function(option)
-            if autofish.setMode then
-                autofish.setMode(option:lower())
-                print("🔧 AutoFish mode changed to: " .. option)
+    -- AutoFish Mode Selection (using buttons instead of dropdown)
+    pcall(function()
+        tab:CreateLabel({
+            Text = "AutoFish Mode Selection:"
+        })
+        
+        RayfieldUI.Elements.SmartModeButton = tab:CreateButton({
+            Name = "Smart Mode (Current)",
+            Callback = function()
+                if autofish.setMode then
+                    autofish.setMode("smart")
+                    print("AutoFish mode changed to: Smart")
+                end
             end
-        end
-    })
+        })
+        
+        RayfieldUI.Elements.SecureModeButton = tab:CreateButton({
+            Name = "Secure Mode",
+            Callback = function()
+                if autofish.setMode then
+                    autofish.setMode("secure")
+                    print("AutoFish mode changed to: Secure")
+                end
+            end
+        })
+        print("✅ Mode selection buttons created")
+    end)
     
-    -- Mode Info Label
-    tab:CreateLabel({
-        Text = "• Smart: High efficiency, medium safety"
-    })
-    
-    tab:CreateLabel({
-        Text = "• Secure: Lower efficiency, high safety"
-    })
+    -- Mode Info Labels
+    pcall(function()
+        tab:CreateLabel({
+            Text = "• Smart: High efficiency, medium safety"
+        })
+        
+        tab:CreateLabel({
+            Text = "• Secure: Lower efficiency, high safety"
+        })
+        print("✅ Mode info labels created")
+    end)
     
     -- Recast Delay Slider
-    RayfieldUI.Elements.RecastDelaySlider = tab:CreateSlider({
-        Name = "⏱️ Recast Delay (seconds)",
-        Range = {0.1, 3.0},
-        Increment = 0.1,
-        CurrentValue = 0.4,
-        Flag = "RecastDelay",
-        Callback = function(value)
-            if autofish.setCastDelay then
-                autofish.setCastDelay(value)
-                print("⏱️ Recast delay set to: " .. value .. "s")
+    pcall(function()
+        RayfieldUI.Elements.RecastDelaySlider = tab:CreateSlider({
+            Name = "Recast Delay (seconds)",
+            Range = {0.1, 3.0},
+            Increment = 0.1,
+            CurrentValue = 0.4,
+            Flag = "RecastDelay",
+            Callback = function(value)
+                if autofish.setCastDelay then
+                    autofish.setCastDelay(value)
+                    print("Recast delay set to: " .. value .. "s")
+                end
             end
-        end
-    })
+        })
+        print("✅ Recast delay slider created")
+    end)
     
     -- Perfect Catch Toggle
-    RayfieldUI.Elements.PerfectCatchToggle = tab:CreateToggle({
-        Name = "🎯 Perfect Catch Mode",
-        CurrentValue = false,
-        Flag = "PerfectCatch",
-        Callback = function(value)
-            if autofish.setPerfectCatch then
-                autofish.setPerfectCatch(value)
+    pcall(function()
+        RayfieldUI.Elements.PerfectCatchToggle = tab:CreateToggle({
+            Name = "Perfect Catch Mode",
+            CurrentValue = false,
+            Flag = "PerfectCatch",
+            Callback = function(value)
+                if autofish.setPerfectCatch then
+                    autofish.setPerfectCatch(value)
+                end
             end
-        end
-    })
+        })
+        print("✅ Perfect catch toggle created")
+    end)
     
-    -- Safe Mode Chance Slider (for perfect catch percentage)
-    RayfieldUI.Elements.SafeModeChanceSlider = tab:CreateSlider({
-        Name = "🛡️ Perfect Catch Rate (%)",
-        Range = {0, 100},
-        Increment = 5,
-        CurrentValue = 70,
-        Flag = "SafeModeChance",
-        Callback = function(value)
-            if autofish.config then
-                autofish.config.safeModeChance = value
-                print("🛡️ Perfect catch rate set to: " .. value .. "%")
+    -- Safe Mode Chance Slider
+    pcall(function()
+        RayfieldUI.Elements.SafeModeChanceSlider = tab:CreateSlider({
+            Name = "Perfect Catch Rate (%)",
+            Range = {0, 100},
+            Increment = 5,
+            CurrentValue = 70,
+            Flag = "SafeModeChance",
+            Callback = function(value)
+                if autofish.config then
+                    autofish.config.safeModeChance = value
+                    print("Perfect catch rate set to: " .. value .. "%")
+                end
             end
-        end
-    })
+        })
+        print("✅ Perfect catch rate slider created")
+    end)
     
     -- Auto Recast Toggle
-    RayfieldUI.Elements.AutoRecastToggle = tab:CreateToggle({
-        Name = "🔄 Auto Recast",
-        CurrentValue = true,
-        Flag = "AutoRecast",
-        Callback = function(value)
-            if autofish.setAutoRecast then
-                autofish.setAutoRecast(value)
+    pcall(function()
+        RayfieldUI.Elements.AutoRecastToggle = tab:CreateToggle({
+            Name = "Auto Recast",
+            CurrentValue = true,
+            Flag = "AutoRecast",
+            Callback = function(value)
+                if autofish.setAutoRecast then
+                    autofish.setAutoRecast(value)
+                end
             end
-        end
-    })
+        })
+        print("✅ Auto recast toggle created")
+    end)
+    
+    print("✅ AutoFish tab completed successfully!")
 end
 
 -- Movement Tab
