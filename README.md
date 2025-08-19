@@ -6,10 +6,46 @@ Advanced modular autofish script for Roblox fishing games with GitHub integratio
 
 - **🎣 Smart AutoFishing** - Advanced fishing automation with multiple modes
 - **🚀 Movement Enhancement** - Float, NoClip, Auto Spinner
-- **📊 Dashboard & Statistics** - Comprehensive fish tracking
-- **🛒 Auto Sell System** - Intelligent selling with rarity filtering  
-- **🔒 Security Features** - Anti-detection and rate limiting
+- **📊 Dashboard & Statistics** - Real-time fish tracking and analytics
+- **🛒 Auto Sell System** - Intelligent selling with threshold controls
+- **🔒 Security Features** - Anti-detection, AntiAFK, Auto Reconnect
 - **🌐 GitHub Integration** - Remote loading and auto-updates
+- **🎈 Floating Button** - Quick access draggable interface
+- **⚙️ Advanced Settings** - Comprehensive configuration options
+
+## 🖥️ User Interface
+
+### Main Features:
+- **📊 Live Dashboard**: Real-time statistics display
+  - Fish count and rarity distribution
+  - Session time and fish per hour
+  - Current location tracking
+  
+- **🎣 AutoFishing Controls**: 
+  - Smart Mode (recommended)
+  - Secure Mode (extra safe)
+  - One-click enable/disable
+  
+- **🚀 Movement Enhancement**:
+  - Float Mode for aerial movement
+  - NoClip for wall penetration  
+  - Auto Spinner for AFK rotation
+  
+- **🛒 Auto Sell System**:
+  - Threshold-based selling (adjustable 1-1000)
+  - Manual sell button
+  - Rarity filtering options
+  
+- **⚙️ Security Settings**:
+  - AntiAFK with random jumps
+  - Auto Reconnect on disconnect
+  - Suspicion monitoring
+
+### UI Controls:
+- **🎈 Floating Button**: Click the 🎣 button to toggle main UI
+- **Draggable Interface**: Drag title bar or floating button to reposition
+- **Live Updates**: Dashboard refreshes every 2 seconds
+- **Responsive Design**: Scrollable interface with organized sections
 
 ## 📦 Modular Architecture
 
@@ -31,9 +67,19 @@ Advanced modular autofish script for Roblox fishing games with GitHub integratio
 
 ## 🛠️ Installation
 
-### Method 1: GitHub Remote Loading
+### Method 1: GitHub Remote Loading (Recommended)
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/main_modular.lua"))()
+```
+
+### Method 2: UI Test Loader
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/ui_test.lua"))()
+```
+
+### Method 3: Basic Test
+```lua
+loadstring(game:HttpGet("https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/test_loader.lua"))()
 ```
 
 ### Method 2: Local Loading
