@@ -49,7 +49,7 @@ local Config = {
     ui = {
         theme = "dark",
         position = {x = 10, y = 10},
-        size = {width = 400, height = 500},
+        size = {width = 400, height = 600}, -- Increased for more sections
         transparency = 0.1
     },
     

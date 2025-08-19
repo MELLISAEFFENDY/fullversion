@@ -14,7 +14,7 @@ local LocalPlayer = Players.LocalPlayer
 UI.config = {
     theme = "dark",
     position = {x = 10, y = 10},
-    size = {width = 400, height = 500},
+    size = {width = 400, height = 600}, -- Increased height for more sections
     transparency = 0.1
 }
 
@@ -329,6 +329,223 @@ local function createMovementSection(parent)
     })
 end
 
+-- Create Dashboard section
+local function createDashboardSection(parent)
+    if not modules.dashboard then return end
+    
+    local section = createFrame(parent, {
+        Size = UDim2.new(1, 0, 0, 200),
+        BackgroundColor3 = colors.dark.background
+    })
+    section.LayoutOrder = 3
+    
+    local sectionTitle = createLabel(section, {
+        Text = "📊 Dashboard & Statistics",
+        Position = UDim2.new(0, 10, 0, 5),
+        TextSize = 16,
+        Font = Enum.Font.SourceSansBold
+    })
+    
+    -- Stats display area
+    local statsFrame = createFrame(section, {
+        Size = UDim2.new(1, -20, 0, 120),
+        Position = UDim2.new(0, 10, 0, 25),
+        BackgroundColor3 = colors.dark.secondary
+    })
+    
+    -- Fish count label
+    local fishCountLabel = createLabel(statsFrame, {
+        Text = "Fish Caught: 0",
+        Position = UDim2.new(0, 10, 0, 5),
+        TextSize = 14,
+        Font = Enum.Font.SourceSansBold,
+        TextColor3 = colors.dark.success
+    })
+    
+    -- Rare fish label
+    local rareFishLabel = createLabel(statsFrame, {
+        Text = "Rare Fish: 0 (0%)",
+        Position = UDim2.new(0, 10, 0, 25),
+        TextSize = 14,
+        Font = Enum.Font.SourceSansBold,
+        TextColor3 = colors.dark.warning
+    })
+    
+    -- Session time label
+    local sessionTimeLabel = createLabel(statsFrame, {
+        Text = "Session Time: 0m",
+        Position = UDim2.new(0, 10, 0, 45),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+    
+    -- Current location label
+    local locationLabel = createLabel(statsFrame, {
+        Text = "Location: Unknown",
+        Position = UDim2.new(0, 10, 0, 65),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+    
+    -- Fish per hour label
+    local fishPerHourLabel = createLabel(statsFrame, {
+        Text = "Fish/Hour: 0",
+        Position = UDim2.new(0, 10, 0, 85),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+    
+    -- Reset stats button
+    local resetBtn = createButton(section, {
+        Text = "Reset Stats",
+        Size = UDim2.new(0.3, 0, 0, 25),
+        Position = UDim2.new(0, 10, 0, 155),
+        BackgroundColor3 = colors.dark.danger,
+        OnClick = function()
+            if modules.dashboard.resetStats then
+                modules.dashboard.resetStats()
+            end
+        end
+    })
+    
+    -- Export data button
+    local exportBtn = createButton(section, {
+        Text = "Export Data",
+        Size = UDim2.new(0.3, 0, 0, 25),
+        Position = UDim2.new(0.35, 0, 0, 155),
+        BackgroundColor3 = colors.dark.accent,
+        OnClick = function()
+            if modules.dashboard.printSummary then
+                modules.dashboard.printSummary()
+            end
+        end
+    })
+    
+    -- Update stats function
+    local function updateStats()
+        if modules.dashboard and modules.dashboard.getSessionStats then
+            local stats = modules.dashboard.getSessionStats()
+            fishCountLabel.Text = "Fish Caught: " .. stats.fishCount
+            rareFishLabel.Text = string.format("Rare Fish: %d (%.1f%%)", stats.rareCount, stats.rarePercentage)
+            sessionTimeLabel.Text = string.format("Session Time: %.1fm", stats.sessionTime / 60)
+            locationLabel.Text = "Location: " .. stats.currentLocation
+            fishPerHourLabel.Text = string.format("Fish/Hour: %.1f", stats.fishPerHour)
+        end
+    end
+    
+    -- Update stats every 2 seconds
+    task.spawn(function()
+        while true do
+            updateStats()
+            task.wait(2)
+        end
+    end)
+end
+
+-- Create Auto Sell section
+local function createAutoSellSection(parent)
+    local section = createFrame(parent, {
+        Size = UDim2.new(1, 0, 0, 140),
+        BackgroundColor3 = colors.dark.background
+    })
+    section.LayoutOrder = 4
+    
+    local sectionTitle = createLabel(section, {
+        Text = "🛒 Auto Sell System",
+        Position = UDim2.new(0, 10, 0, 5),
+        TextSize = 16,
+        Font = Enum.Font.SourceSansBold
+    })
+    
+    -- Auto sell toggle
+    createToggle(section, {
+        Text = "Enable Auto Sell",
+        Position = UDim2.new(0, 5, 0, 25),
+        Enabled = false,
+        OnToggle = function(enabled)
+            -- Auto sell functionality will be implemented
+            print("Auto Sell:", enabled and "Enabled" or "Disabled")
+        end
+    })
+    
+    -- Threshold label and controls
+    local thresholdLabel = createLabel(section, {
+        Text = "Sell Threshold: 50 fish",
+        Position = UDim2.new(0, 10, 0, 75),
+        TextSize = 14,
+        Font = Enum.Font.SourceSans
+    })
+    
+    -- Threshold buttons
+    local decreaseBtn = createButton(section, {
+        Text = "-",
+        Size = UDim2.new(0, 30, 0, 25),
+        Position = UDim2.new(0, 10, 0, 95),
+        BackgroundColor3 = colors.dark.danger,
+        OnClick = function()
+            -- Decrease threshold logic
+            print("Decrease threshold")
+        end
+    })
+    
+    local increaseBtn = createButton(section, {
+        Text = "+",
+        Size = UDim2.new(0, 30, 0, 25),
+        Position = UDim2.new(0, 45, 0, 95),
+        BackgroundColor3 = colors.dark.success,
+        OnClick = function()
+            -- Increase threshold logic
+            print("Increase threshold")
+        end
+    })
+    
+    local sellNowBtn = createButton(section, {
+        Text = "Sell Now",
+        Size = UDim2.new(0.4, 0, 0, 25),
+        Position = UDim2.new(0.55, 0, 0, 95),
+        BackgroundColor3 = colors.dark.warning,
+        OnClick = function()
+            print("Manual sell triggered")
+        end
+    })
+end
+
+-- Create Settings section
+local function createSettingsSection(parent)
+    local section = createFrame(parent, {
+        Size = UDim2.new(1, 0, 0, 100),
+        BackgroundColor3 = colors.dark.background
+    })
+    section.LayoutOrder = 5
+    
+    local sectionTitle = createLabel(section, {
+        Text = "⚙️ Settings",
+        Position = UDim2.new(0, 10, 0, 5),
+        TextSize = 16,
+        Font = Enum.Font.SourceSansBold
+    })
+    
+    -- AntiAFK toggle
+    createToggle(section, {
+        Text = "Anti-AFK",
+        Position = UDim2.new(0, 5, 0, 25),
+        Enabled = false,
+        OnToggle = function(enabled)
+            print("Anti-AFK:", enabled and "Enabled" or "Disabled")
+        end
+    })
+    
+    -- Auto Reconnect toggle  
+    createToggle(section, {
+        Text = "Auto Reconnect",
+        Position = UDim2.new(0, 5, 0, 65),
+        Enabled = false,
+        OnToggle = function(enabled)
+            print("Auto Reconnect:", enabled and "Enabled" or "Disabled")
+        end
+    })
+end
+
 -- Make UI draggable
 local function makeDraggable()
     local dragging = false
@@ -365,6 +582,104 @@ local function makeDraggable()
     end)
 end
 
+-- Create floating button
+local floatingButton = nil
+local function createFloatingButton()
+    if floatingButton then
+        floatingButton:Destroy()
+    end
+    
+    floatingButton = Instance.new("TextButton")
+    floatingButton.Parent = screenGui
+    floatingButton.Size = UDim2.new(0, 60, 0, 60)
+    floatingButton.Position = UDim2.new(1, -80, 0.5, -30)
+    floatingButton.BackgroundColor3 = colors.dark.accent
+    floatingButton.BorderSizePixel = 0
+    floatingButton.Text = "🎣"
+    floatingButton.TextColor3 = colors.dark.text
+    floatingButton.TextScaled = true
+    floatingButton.Font = Enum.Font.SourceSansBold
+    floatingButton.ZIndex = 100
+    
+    -- Add corner radius
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 30)
+    corner.Parent = floatingButton
+    
+    -- Add shadow effect
+    local shadow = Instance.new("Frame")
+    shadow.Parent = screenGui
+    shadow.Size = UDim2.new(0, 64, 0, 64)
+    shadow.Position = UDim2.new(1, -82, 0.5, -32)
+    shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.BackgroundTransparency = 0.5
+    shadow.BorderSizePixel = 0
+    shadow.ZIndex = 99
+    
+    local shadowCorner = Instance.new("UICorner")
+    shadowCorner.CornerRadius = UDim.new(0, 32)
+    shadowCorner.Parent = shadow
+    
+    -- Floating button animations
+    floatingButton.MouseEnter:Connect(function()
+        local tween = TweenService:Create(floatingButton, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 65, 0, 65),
+            BackgroundColor3 = Color3.fromRGB(
+                math.min(255, colors.dark.accent.R * 255 + 30),
+                math.min(255, colors.dark.accent.G * 255 + 30),
+                math.min(255, colors.dark.accent.B * 255 + 30)
+            )
+        })
+        tween:Play()
+    end)
+    
+    floatingButton.MouseLeave:Connect(function()
+        local tween = TweenService:Create(floatingButton, TweenInfo.new(0.2), {
+            Size = UDim2.new(0, 60, 0, 60),
+            BackgroundColor3 = colors.dark.accent
+        })
+        tween:Play()
+    end)
+    
+    -- Click to toggle main UI
+    floatingButton.MouseButton1Click:Connect(function()
+        UI.toggle()
+    end)
+    
+    -- Make floating button draggable
+    local floatDragging = false
+    local floatDragStart = nil
+    local floatStartPos = nil
+    
+    floatingButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            floatDragging = true
+            floatDragStart = input.Position
+            floatStartPos = floatingButton.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if floatDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+            local delta = input.Position - floatDragStart
+            local newPos = UDim2.new(
+                floatStartPos.X.Scale,
+                floatStartPos.X.Offset + delta.X,
+                floatStartPos.Y.Scale,
+                floatStartPos.Y.Offset + delta.Y
+            )
+            floatingButton.Position = newPos
+            shadow.Position = UDim2.new(newPos.X.Scale, newPos.X.Offset - 2, newPos.Y.Scale, newPos.Y.Offset - 2)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            floatDragging = false
+        end
+    end)
+end
+
 -- Public API
 function UI.createInterface(moduleInstances)
     if screenGui then
@@ -378,9 +693,15 @@ function UI.createInterface(moduleInstances)
     -- Create sections
     createAutoFishSection(content)
     createMovementSection(content)
+    createDashboardSection(content)
+    createAutoSellSection(content)
+    createSettingsSection(content)
     
     -- Make draggable
     makeDraggable()
+    
+    -- Create floating button
+    createFloatingButton()
     
     -- Update canvas size
     local layout = content:FindFirstChild("UIListLayout")
@@ -442,6 +763,11 @@ function UI.cleanup()
         screenGui:Destroy()
         screenGui = nil
         mainFrame = nil
+    end
+    
+    if floatingButton then
+        floatingButton:Destroy()
+        floatingButton = nil
     end
     
     print("🧹 UI module cleaned up")
