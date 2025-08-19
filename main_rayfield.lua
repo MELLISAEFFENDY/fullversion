@@ -183,28 +183,60 @@ local function initializeAutoFish()
     print("🔧 Initializing module systems...")
     
     -- Initialize modules in dependency order
+    print("🔧 Initializing modules...")
+    
     if modules.security then
-        pcall(function() modules.security.initialize() end)
+        local ok, err = pcall(function() modules.security.initialize() end)
+        print("Security init:", ok and "✅" or "❌ " .. tostring(err))
     end
     
     if modules.fish_tracker then
-        pcall(function() modules.fish_tracker.initialize() end)
+        local ok, err = pcall(function() modules.fish_tracker.initialize() end)
+        print("Fish tracker init:", ok and "✅" or "❌ " .. tostring(err))
     end
 
     if modules.dashboard then
-        pcall(function() modules.dashboard.initialize(modules) end)
+        local ok, err = pcall(function() 
+            if modules.dashboard.initialize then
+                modules.dashboard.initialize(modules)
+            else
+                print("❌ Dashboard has no initialize method")
+            end
+        end)
+        print("Dashboard init:", ok and "✅" or "❌ " .. tostring(err))
     end
     
     if modules.movement then
-        pcall(function() modules.movement.initialize() end)
+        local ok, err = pcall(function() 
+            if modules.movement.initialize then
+                modules.movement.initialize()
+            else
+                print("❌ Movement has no initialize method")
+            end
+        end)
+        print("Movement init:", ok and "✅" or "❌ " .. tostring(err))
     end
     
     if modules.autosell then
-        pcall(function() modules.autosell.initialize() end)
+        local ok, err = pcall(function() 
+            if modules.autosell.initialize then
+                modules.autosell.initialize()
+            else
+                print("❌ Autosell has no initialize method")
+            end
+        end)
+        print("Autosell init:", ok and "✅" or "❌ " .. tostring(err))
     end
     
     if modules.autofish then
-        pcall(function() modules.autofish.initialize() end)
+        local ok, err = pcall(function() 
+            if modules.autofish.initialize then
+                modules.autofish.initialize()
+            else
+                print("❌ Autofish has no initialize method")
+            end
+        end)
+        print("Autofish init:", ok and "✅" or "❌ " .. tostring(err))
     end    -- Initialize UI (Rayfield UI or fallback to custom UI)
     local uiModule = modules.rayfield_ui or modules.ui
     local uiType = modules.rayfield_ui and "Rayfield" or "Custom"

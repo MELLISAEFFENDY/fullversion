@@ -360,4 +360,10 @@ function AutoSell.setSellLegendary(enabled)
     notify("Auto Sell", "👑 Legendary fish selling: " .. (enabled and "enabled" or "disabled"))
 end
 
+function AutoSell.initialize()
+    print("💰 AutoSell: Initializing...")
+    -- Initialize any autosell connections or configurations
+    print("💰 AutoSell: Initialization complete")
+end
+
 return AutoSell

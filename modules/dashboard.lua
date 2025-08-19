@@ -357,6 +357,14 @@ function Dashboard.init(config)
     return true
 end
 
+function Dashboard.initialize(modules)
+    print("📊 Dashboard: Initializing...")
+    Dashboard.config.trackingEnabled = true
+    -- Store reference to modules for dashboard functionality
+    Dashboard.modules = modules
+    print("📊 Dashboard: Initialization complete")
+end
+
 function Dashboard.cleanup()
     Dashboard.config.trackingEnabled = false
     print("🧹 Dashboard module cleaned up")

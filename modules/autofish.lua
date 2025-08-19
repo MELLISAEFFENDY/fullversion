@@ -393,6 +393,13 @@ local function AutofishRunner(mySession)
 end
 
 -- Public API
+function AutoFish.initialize()
+    print("🎣 AutoFish: Initializing...")
+    -- Refresh remotes on initialization
+    rodRemote, miniGameRemote, finishRemote, equipRemote = RefreshRemotes()
+    print("🎣 AutoFish: Initialization complete")
+end
+
 function AutoFish.start()
     if AutoFish.config.enabled then return false end
     

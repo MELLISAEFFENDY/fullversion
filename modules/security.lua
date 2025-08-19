@@ -333,4 +333,11 @@ function Security.setAutoReconnect(enabled)
     notify("Security", "🔄 Auto-reconnect: " .. (enabled and "enabled" or "disabled"))
 end
 
+-- Initialize function
+function Security.initialize()
+    print("🛡️ Security: Initializing...")
+    Security.startMonitoring()
+    print("🛡️ Security: Initialization complete")
+end
+
 return Security

@@ -224,6 +224,12 @@ local function onCharacterAdded(character)
     Movement.storeOriginalValues()
 end
 
+function Movement.initialize()
+    print("🏃 Movement: Initializing...")
+    Movement.storeOriginalValues()
+    print("🏃 Movement: Initialization complete")
+end
+
 if LocalPlayer.Character then
     onCharacterAdded(LocalPlayer.Character)
 end
