@@ -172,4 +172,61 @@ function Movement.setSpinnerSpeed(speed)
     end
 end
 
+-- Speed and Jump Power functions
+function Movement.setSpeed(speed)
+    pcall(function()
+        local character = LocalPlayer.Character
+        if not character then return end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not humanoid then return end
+        
+        humanoid.WalkSpeed = speed
+        notify("Movement", "Walk speed set to: " .. speed)
+    end)
+end
+
+function Movement.setJumpPower(power)
+    pcall(function()
+        local character = LocalPlayer.Character
+        if not character then return end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not humanoid then return end
+        
+        humanoid.JumpPower = power
+        notify("Movement", "Jump power set to: " .. power)
+    end)
+end
+
+-- Store original values for restoration
+function Movement.storeOriginalValues()
+    pcall(function()
+        local character = LocalPlayer.Character
+        if not character then return end
+        
+        local humanoid = character:FindFirstChild("Humanoid")
+        if not humanoid then return end
+        
+        if not originalProperties.WalkSpeed then
+            originalProperties.WalkSpeed = humanoid.WalkSpeed
+        end
+        if not originalProperties.JumpPower then
+            originalProperties.JumpPower = humanoid.JumpPower
+        end
+    end)
+end
+
+-- Auto-store values when character spawns
+local function onCharacterAdded(character)
+    character:WaitForChild("Humanoid")
+    wait(1) -- Wait for everything to load
+    Movement.storeOriginalValues()
+end
+
+if LocalPlayer.Character then
+    onCharacterAdded(LocalPlayer.Character)
+end
+LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+
 return Movement

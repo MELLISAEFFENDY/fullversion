@@ -435,6 +435,16 @@ function RayfieldUI.createSettingsTab()
             RayfieldUI.toggleMenuVisibility(value)
         end
     })
+    
+    -- Floating Button Toggle
+    RayfieldUI.Elements.FloatingButtonToggle = tab:CreateToggle({
+        Name = "🎯 Floating Button",
+        CurrentValue = false,
+        Flag = "FloatingButton",
+        Callback = function(value)
+            RayfieldUI.toggleFloatingButton(value)
+        end
+    })
 end
 
 -- Dashboard Tab
@@ -713,6 +723,154 @@ function RayfieldUI.toggleMenuVisibility(visible)
     if RayfieldUI.Window and RayfieldUI.Window.MainFrame then
         RayfieldUI.Window.MainFrame.Visible = visible
         print("👁️ Menu: " .. (visible and "Shown" or "Hidden"))
+    end
+end
+
+-- Floating Button system
+RayfieldUI.FloatingButton = nil
+
+function RayfieldUI.toggleFloatingButton(enabled)
+    if enabled then
+        RayfieldUI.createFloatingButton()
+    else
+        RayfieldUI.destroyFloatingButton()
+    end
+end
+
+function RayfieldUI.createFloatingButton()
+    if RayfieldUI.FloatingButton then
+        RayfieldUI.destroyFloatingButton()
+    end
+    
+    pcall(function()
+        local Players = game:GetService("Players")
+        local TweenService = game:GetService("TweenService")
+        local UserInputService = game:GetService("UserInputService")
+        
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "AutoFishFloatingButton"
+        ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        ScreenGui.ResetOnSpawn = false
+        
+        if gethui then
+            ScreenGui.Parent = gethui()
+        else
+            ScreenGui.Parent = game:GetService("CoreGui")
+        end
+        
+        -- Main floating button
+        local FloatingButton = Instance.new("TextButton")
+        FloatingButton.Name = "FloatingButton"
+        FloatingButton.Size = UDim2.new(0, 60, 0, 60)
+        FloatingButton.Position = UDim2.new(1, -80, 0.5, -30)
+        FloatingButton.BackgroundColor3 = Color3.fromRGB(120, 80, 200) -- Purple theme
+        FloatingButton.Text = "🎣"
+        FloatingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        FloatingButton.TextSize = 24
+        FloatingButton.Font = Enum.Font.GothamBold
+        FloatingButton.BorderSizePixel = 0
+        FloatingButton.Parent = ScreenGui
+        
+        -- Corner and shadow
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 30)
+        Corner.Parent = FloatingButton
+        
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = Color3.fromRGB(150, 100, 220)
+        Stroke.Thickness = 2
+        Stroke.Parent = FloatingButton
+        
+        -- Make draggable
+        local dragging = false
+        local dragStart = nil
+        local startPos = nil
+        
+        FloatingButton.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true
+                dragStart = input.Position
+                startPos = FloatingButton.Position
+            end
+        end)
+        
+        FloatingButton.InputChanged:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseMovement and dragging then
+                local delta = input.Position - dragStart
+                FloatingButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            end
+        end)
+        
+        FloatingButton.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = false
+            end
+        end)
+        
+        -- Click to toggle AutoFish
+        FloatingButton.MouseButton1Click:Connect(function()
+            if not dragging then
+                if RayfieldUI.modules and RayfieldUI.modules.autofish then
+                    local isRunning = RayfieldUI.modules.autofish.isRunning and RayfieldUI.modules.autofish.isRunning() or false
+                    
+                    if isRunning then
+                        if RayfieldUI.modules.autofish.stop then
+                            RayfieldUI.modules.autofish.stop()
+                            FloatingButton.Text = "🎣"
+                            FloatingButton.BackgroundColor3 = Color3.fromRGB(120, 80, 200)
+                        end
+                    else
+                        if RayfieldUI.modules.autofish.start then
+                            RayfieldUI.modules.autofish.start()
+                            FloatingButton.Text = "🟢"
+                            FloatingButton.BackgroundColor3 = Color3.fromRGB(80, 200, 120)
+                        end
+                    end
+                    
+                    -- Update UI toggle if available
+                    if RayfieldUI.Elements.AutoFishToggle then
+                        RayfieldUI.Elements.AutoFishToggle:Set(not isRunning)
+                    end
+                end
+            end
+        end)
+        
+        -- Right click to show/hide main UI
+        FloatingButton.MouseButton2Click:Connect(function()
+            if RayfieldUI.Window and RayfieldUI.Window.MainFrame then
+                local currentVisibility = RayfieldUI.Window.MainFrame.Visible
+                RayfieldUI.toggleMenuVisibility(not currentVisibility)
+                if RayfieldUI.Elements.MenuVisibilityToggle then
+                    RayfieldUI.Elements.MenuVisibilityToggle:Set(not currentVisibility)
+                end
+            end
+        end)
+        
+        -- Hover effects
+        FloatingButton.MouseEnter:Connect(function()
+            TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 70, 0, 70),
+                BackgroundTransparency = 0.1
+            }):Play()
+        end)
+        
+        FloatingButton.MouseLeave:Connect(function()
+            TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                Size = UDim2.new(0, 60, 0, 60),
+                BackgroundTransparency = 0
+            }):Play()
+        end)
+        
+        RayfieldUI.FloatingButton = ScreenGui
+        print("🎯 Floating Button: Created")
+    end)
+end
+
+function RayfieldUI.destroyFloatingButton()
+    if RayfieldUI.FloatingButton then
+        RayfieldUI.FloatingButton:Destroy()
+        RayfieldUI.FloatingButton = nil
+        print("🎯 Floating Button: Destroyed")
     end
 end
 
