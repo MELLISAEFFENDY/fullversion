@@ -5,8 +5,8 @@
 print("🚀 Starting Modern AutoFish Modular...")
 
 -- Configuration
-local GITHUB_USER = "YourUsername"  -- Ganti dengan username GitHub Anda
-local REPO_NAME = "AutoFishScript"  -- Ganti dengan nama repo Anda
+local GITHUB_USER = "MELLISAEFFENDY"  -- GitHub username
+local REPO_NAME = "fullversion"      -- Repository name
 local BRANCH = "main"
 local BASE_URL = string.format("https://raw.githubusercontent.com/%s/%s/%s/", GITHUB_USER, REPO_NAME, BRANCH)
 

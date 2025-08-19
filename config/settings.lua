@@ -55,8 +55,8 @@ local Config = {
     
     -- GitHub settings (for updates)
     github = {
-        user = "YourUsername",
-        repo = "AutoFishScript", 
+        user = "MELLISAEFFENDY",
+        repo = "fullversion", 
         branch = "main"
     }
 }
