@@ -20,138 +20,6 @@ if not LocalPlayer then
     return
 end
 
--- ====================================================================
--- EXTERNAL EVENT DETECTOR LOADER
--- ====================================================================
-
--- HTTP Service for loading external scripts
-local HttpService = game:GetService("HttpService")
-
--- Event Detector Module URLs (multiple sources for reliability)
-local EVENT_DETECTOR_URLS = {
-    "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/event_detector.lua",
-    "https://cdn.jsdelivr.net/gh/MELLISAEFFENDY/fullversion@main/event_detector.lua"
-}
-
--- Event Detector globals that will be set by external script
-local EventDetector = nil
-local ScanEventLocations = nil
-local TeleportToEvent = nil
-
--- Function to load Event Detector from GitHub with better error handling
-local function LoadEventDetector()
-    print("🔄 Initializing Event Detector...")
-    
-    -- First, create local fallback to ensure variables are never nil
-    EventDetector = {
-        detectedEvents = {},
-        eventLocations = {},
-        adminEventsList = {
-            ["Black Hole"] = {
-                keywords = {"black", "hole", "blackhole"},
-                icon = "🕳️",
-                rarity = "MYTHIC",
-                description = "Fish in Black Hole for x5 mutations!"
-            },
-            ["Ghost Shark Hunt"] = {
-                keywords = {"ghost", "shark", "hunt"},
-                icon = "👻",
-                rarity = "LEGENDARY",
-                description = "Hunt Ghost Sharks for rare rewards!"
-            },
-            ["Meteor Shower"] = {
-                keywords = {"meteor", "shower"},
-                icon = "☄️",
-                rarity = "EPIC",
-                description = "Fish during meteor shower!"
-            }
-        },
-        isScanning = false,
-        ScanForAdminEvents = function() 
-            print("🔍 Event Scanner (Local Mode)")
-            return {}
-        end
-    }
-    
-    ScanEventLocations = function()
-        print("📍 Location Scanner (Local Mode)")
-        return {}
-    end
-    
-    TeleportToEvent = function(eventName)
-        print("🚀 Local Teleport:", eventName)
-        return false
-    end
-    
-    print("✅ Local Event Detector initialized")
-    
-    -- Try to load remote version (with timeout and retry protection)
-    task.spawn(function()
-        local attempts = 0
-        local maxAttempts = 3
-        local retryDelay = 5
-        
-        for urlIndex, url in ipairs(EVENT_DETECTOR_URLS) do
-            local urlName = urlIndex == 1 and "GitHub" or "JSDelivr CDN"
-            
-            while attempts < maxAttempts do
-                attempts = attempts + 1
-                print(string.format("🌐 Attempting to load from %s... (Attempt %d/%d)", urlName, attempts, maxAttempts))
-                
-                local success, result = pcall(function()
-                    -- Add cache busting and timeout protection
-                    local cacheUrl = url .. "?cache=" .. tick()
-                    
-                    local scriptContent = game:HttpGet(cacheUrl)
-                    if scriptContent and #scriptContent > 100 then -- Basic validation
-                        local loadedScript = loadstring(scriptContent)
-                        if loadedScript then
-                            loadedScript()
-                            return true
-                        end
-                    end
-                    return false
-                end)
-                
-                if success and result then
-                    print("✅ Remote Event Detector loaded successfully from " .. urlName .. "!")
-                    return
-                else
-                    local errorMsg = tostring(result)
-                    if errorMsg:find("429") then
-                        print("⚠️ " .. urlName .. " rate limit hit. Trying next source...")
-                        break -- Try next URL
-                    elseif errorMsg:find("Http requests are not enabled") then
-                        print("⚠️ HTTP requests disabled. Using local fallback.")
-                        return -- Don't retry if HTTP is disabled
-                    else
-                        print("⚠️ " .. urlName .. " loading failed:", errorMsg)
-                    end
-                    
-                    if attempts < maxAttempts then
-                        print(string.format("⏳ Retrying %s in %d seconds...", urlName, retryDelay))
-                        task.wait(retryDelay)
-                        retryDelay = math.min(retryDelay * 1.5, 30) -- Exponential backoff with cap
-                    end
-                end
-            end
-            
-            -- Reset attempts for next URL
-            attempts = 0
-            retryDelay = 5
-        end
-        
-        print("ℹ️ All remote sources failed. Using local Event Detector fallback.")
-    end)
-    
-    return true
-end
-
--- Load Event Detector on script start
-LoadEventDetector()
-
--- ====================================================================
-
 -- Rod Orientation Fix
 local RodFix = {
     enabled = true,
@@ -2367,21 +2235,6 @@ local function BuildUI()
     local dashboardTabPadding = Instance.new("UIPadding", dashboardTabBtn)
     dashboardTabPadding.PaddingLeft = UDim.new(0, 10)
 
-    -- Event Tab Button
-    local eventTabBtn = Instance.new("TextButton", sidebar)
-    eventTabBtn.Size = UDim2.new(1, -10, 0, 40)
-    eventTabBtn.Position = UDim2.new(0, 5, 0, 255)
-    eventTabBtn.Text = "🚨 Events"
-    eventTabBtn.Font = Enum.Font.GothamSemibold
-    eventTabBtn.TextSize = 14
-    eventTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-    eventTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-    eventTabBtn.TextXAlignment = Enum.TextXAlignment.Left
-    local eventTabCorner = Instance.new("UICorner", eventTabBtn)
-    eventTabCorner.CornerRadius = UDim.new(0, 6)
-    local eventTabPadding = Instance.new("UIPadding", eventTabBtn)
-    eventTabPadding.PaddingLeft = UDim.new(0, 10)
-
     -- Content area on the right
     local contentContainer = Instance.new("Frame", panel)
     contentContainer.Size = UDim2.new(1, -145, 1, -50)
@@ -4336,252 +4189,8 @@ local function BuildUI()
         end)
     end)
 
-    -- Event Tab Content
-    local eventFrame = Instance.new("Frame", contentContainer)
-    eventFrame.Size = UDim2.new(1, 0, 1, -10)
-    eventFrame.Position = UDim2.new(0, 0, 0, 0)
-    eventFrame.BackgroundTransparency = 1
-    eventFrame.Visible = false
-
-    local eventTitle = Instance.new("TextLabel", eventFrame)
-    eventTitle.Size = UDim2.new(1, 0, 0, 24)
-    eventTitle.Text = "🚨 Admin Event Detector"
-    eventTitle.Font = Enum.Font.GothamBold
-    eventTitle.TextSize = 16
-    eventTitle.TextColor3 = Color3.fromRGB(235,235,235)
-    eventTitle.BackgroundTransparency = 1
-    eventTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-    -- Event Status Section
-    local eventStatusSection = Instance.new("Frame", eventFrame)
-    eventStatusSection.Size = UDim2.new(1, -10, 0, 80)
-    eventStatusSection.Position = UDim2.new(0, 5, 0, 35)
-    eventStatusSection.BackgroundColor3 = Color3.fromRGB(45,45,52)
-    eventStatusSection.BorderSizePixel = 0
-    Instance.new("UICorner", eventStatusSection)
-
-    local eventStatusTitle = Instance.new("TextLabel", eventStatusSection)
-    eventStatusTitle.Size = UDim2.new(1, -20, 0, 25)
-    eventStatusTitle.Position = UDim2.new(0, 10, 0, 5)
-    eventStatusTitle.Text = "🔍 Event Scanner Status"
-    eventStatusTitle.Font = Enum.Font.GothamBold
-    eventStatusTitle.TextSize = 14
-    eventStatusTitle.TextColor3 = Color3.fromRGB(100,255,150)
-    eventStatusTitle.BackgroundTransparency = 1
-    eventStatusTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-    local eventScannerStatus = Instance.new("TextLabel", eventStatusSection)
-    eventScannerStatus.Size = UDim2.new(1, -20, 0, 45)
-    eventScannerStatus.Position = UDim2.new(0, 10, 0, 30)
-    eventScannerStatus.Text = "✅ Scanner: Active\n🔄 Auto-scan: Every 5 seconds\n📡 Monitoring for admin events..."
-    eventScannerStatus.Font = Enum.Font.GothamSemibold
-    eventScannerStatus.TextSize = 11
-    eventScannerStatus.TextColor3 = Color3.fromRGB(200,200,200)
-    eventScannerStatus.BackgroundTransparency = 1
-    eventScannerStatus.TextXAlignment = Enum.TextXAlignment.Left
-    eventScannerStatus.TextYAlignment = Enum.TextYAlignment.Top
-
-    -- Event Control Buttons
-    local eventControlsSection = Instance.new("Frame", eventFrame)
-    eventControlsSection.Size = UDim2.new(1, -10, 0, 50)
-    eventControlsSection.Position = UDim2.new(0, 5, 0, 125)
-    eventControlsSection.BackgroundColor3 = Color3.fromRGB(45,45,52)
-    eventControlsSection.BorderSizePixel = 0
-    Instance.new("UICorner", eventControlsSection)
-
-    -- Manual Scan Button
-    local manualScanBtn = Instance.new("TextButton", eventControlsSection)
-    manualScanBtn.Size = UDim2.new(0, 120, 0, 30)
-    manualScanBtn.Position = UDim2.new(0, 10, 0, 10)
-    manualScanBtn.Text = "🔍 Manual Scan"
-    manualScanBtn.Font = Enum.Font.GothamSemibold
-    manualScanBtn.TextSize = 12
-    manualScanBtn.BackgroundColor3 = Color3.fromRGB(100,200,100)
-    manualScanBtn.TextColor3 = Color3.fromRGB(255,255,255)
-    Instance.new("UICorner", manualScanBtn)
-
-    manualScanBtn.MouseButton1Click:Connect(function()
-        pcall(function()
-            -- Safety checks for Event Detector
-            if EventDetector and type(EventDetector) == "table" and EventDetector.ScanForAdminEvents then
-                EventDetector.ScanForAdminEvents()
-                print("🔍 Manual scan triggered via EventDetector")
-            else
-                print("⚠️ EventDetector not available or incomplete")
-            end
-            
-            -- Safety check for ScanEventLocations
-            if ScanEventLocations and type(ScanEventLocations) == "function" then
-                ScanEventLocations()
-                print("📍 Location scan triggered")
-            else
-                print("⚠️ ScanEventLocations function not available")
-            end
-            
-            Notify("Event Scanner", "🔍 Manual scan completed!")
-        end)
-    end)
-
-    -- HTTP Load Button
-    local httpLoadBtn = Instance.new("TextButton", eventControlsSection)
-    httpLoadBtn.Size = UDim2.new(0, 120, 0, 30)
-    httpLoadBtn.Position = UDim2.new(0, 140, 0, 10)
-    httpLoadBtn.Text = "🌐 Reload Detector"
-    httpLoadBtn.Font = Enum.Font.GothamSemibold
-    httpLoadBtn.TextSize = 12
-    httpLoadBtn.BackgroundColor3 = Color3.fromRGB(70,130,255)
-    httpLoadBtn.TextColor3 = Color3.fromRGB(255,255,255)
-    Instance.new("UICorner", httpLoadBtn)
-
-    httpLoadBtn.MouseButton1Click:Connect(function()
-        pcall(function()
-            Notify("Event Detector", "🔄 Reloading Event Detector...")
-            LoadEventDetector()
-        end)
-    end)
-
-    -- Event List Section
-    local eventListSection = Instance.new("Frame", eventFrame)
-    eventListSection.Size = UDim2.new(1, -10, 1, -190)
-    eventListSection.Position = UDim2.new(0, 5, 0, 185)
-    eventListSection.BackgroundColor3 = Color3.fromRGB(45,45,52)
-    eventListSection.BorderSizePixel = 0
-    Instance.new("UICorner", eventListSection)
-
-    local eventListTitle = Instance.new("TextLabel", eventListSection)
-    eventListTitle.Size = UDim2.new(1, -20, 0, 25)
-    eventListTitle.Position = UDim2.new(0, 10, 0, 5)
-    eventListTitle.Text = "🚨 Detected Events"
-    eventListTitle.Font = Enum.Font.GothamBold
-    eventListTitle.TextSize = 14
-    eventListTitle.TextColor3 = Color3.fromRGB(255,100,100)
-    eventListTitle.BackgroundTransparency = 1
-    eventListTitle.TextXAlignment = Enum.TextXAlignment.Left
-
-    local eventList = Instance.new("ScrollingFrame", eventListSection)
-    eventList.Size = UDim2.new(1, -20, 1, -35)
-    eventList.Position = UDim2.new(0, 10, 0, 30)
-    eventList.BackgroundColor3 = Color3.fromRGB(35,35,40)
-    eventList.BorderSizePixel = 0
-    eventList.ScrollBarThickness = 4
-    eventList.ScrollBarImageColor3 = Color3.fromRGB(80,80,80)
-    Instance.new("UICorner", eventList)
-
-    -- Function to update event list (will be called by external detector)
-    function UpdateEventsList()
-        -- Clear existing items
-        for _, child in pairs(eventList:GetChildren()) do
-            if child:IsA("Frame") then
-                child:Destroy()
-            end
-        end
-
-        local yPos = 5
-        local eventCount = 0
-
-        if EventDetector and EventDetector.detectedEvents then
-            for eventName, eventInfo in pairs(EventDetector.detectedEvents) do
-                if eventInfo.detected then
-                    eventCount = eventCount + 1
-                    local eventData = EventDetector.adminEventsList[eventName] or {
-                        icon = "🎯",
-                        rarity = "UNKNOWN",
-                        description = "Event detected"
-                    }
-                    
-                    -- Create event item
-                    local eventItem = Instance.new("Frame", eventList)
-                    eventItem.Size = UDim2.new(1, -10, 0, 60)
-                    eventItem.Position = UDim2.new(0, 5, 0, yPos)
-                    eventItem.BackgroundColor3 = Color3.fromRGB(50,50,58)
-                    eventItem.BorderSizePixel = 0
-                    Instance.new("UICorner", eventItem)
-
-                    -- Event name
-                    local eventNameLabel = Instance.new("TextLabel", eventItem)
-                    eventNameLabel.Size = UDim2.new(0.6, -10, 0, 20)
-                    eventNameLabel.Position = UDim2.new(0, 10, 0, 5)
-                    eventNameLabel.Text = eventData.icon .. " " .. eventName
-                    eventNameLabel.Font = Enum.Font.GothamBold
-                    eventNameLabel.TextSize = 12
-                    eventNameLabel.TextColor3 = Color3.fromRGB(255,255,255)
-                    eventNameLabel.BackgroundTransparency = 1
-                    eventNameLabel.TextXAlignment = Enum.TextXAlignment.Left
-
-                    -- Teleport button
-                    local teleportBtn = Instance.new("TextButton", eventItem)
-                    teleportBtn.Size = UDim2.new(0, 80, 0, 20)
-                    teleportBtn.Position = UDim2.new(1, -90, 0, 5)
-                    teleportBtn.Text = "📍 Teleport"
-                    teleportBtn.Font = Enum.Font.GothamSemibold
-                    teleportBtn.TextSize = 10
-                    teleportBtn.BackgroundColor3 = Color3.fromRGB(70,130,255)
-                    teleportBtn.TextColor3 = Color3.fromRGB(255,255,255)
-                    Instance.new("UICorner", teleportBtn)
-
-                    teleportBtn.MouseButton1Click:Connect(function()
-                        pcall(function()
-                            if TeleportToEvent and type(TeleportToEvent) == "function" then
-                                local success = TeleportToEvent(eventName)
-                                if success then
-                                    Notify("Event Teleport", "🚀 Teleported to " .. eventName)
-                                else
-                                    Notify("Event Teleport", "⚠️ Teleport failed for " .. eventName)
-                                end
-                            else
-                                Notify("Event Teleport", "❌ Teleport function not available")
-                            end
-                        end)
-                    end)
-
-                    -- Event description
-                    local eventDesc = Instance.new("TextLabel", eventItem)
-                    eventDesc.Size = UDim2.new(1, -20, 0, 30)
-                    eventDesc.Position = UDim2.new(0, 10, 0, 25)
-                    eventDesc.Text = eventData.description
-                    eventDesc.Font = Enum.Font.Gotham
-                    eventDesc.TextSize = 9
-                    eventDesc.TextColor3 = Color3.fromRGB(180,180,180)
-                    eventDesc.BackgroundTransparency = 1
-                    eventDesc.TextXAlignment = Enum.TextXAlignment.Left
-                    eventDesc.TextYAlignment = Enum.TextYAlignment.Top
-                    eventDesc.TextWrapped = true
-
-                    yPos = yPos + 70
-                end
-            end
-        end
-
-        -- Update canvas size
-        eventList.CanvasSize = UDim2.new(0, 0, 0, math.max(yPos, 100))
-
-        -- No events message
-        if eventCount == 0 then
-            local noEventsLabel = Instance.new("TextLabel", eventList)
-            noEventsLabel.Size = UDim2.new(1, -20, 0, 40)
-            noEventsLabel.Position = UDim2.new(0, 10, 0, 20)
-            noEventsLabel.Text = "❌ No admin events detected\n🔍 Scanner is actively monitoring..."
-            noEventsLabel.Font = Enum.Font.GothamSemibold
-            noEventsLabel.TextSize = 12
-            noEventsLabel.TextColor3 = Color3.fromRGB(150,150,150)
-            noEventsLabel.BackgroundTransparency = 1
-            noEventsLabel.TextXAlignment = Enum.TextXAlignment.Center
-        end
-    end
-
-    -- Auto-update event list every 3 seconds
-    spawn(function()
-        while true do
-            wait(3)
-            pcall(UpdateEventsList)
-        end
-    end)
-
-    -- Initial update
-    UpdateEventsList()
-
     -- Robust tab switching: collect tabs and provide SwitchTo
-    local Tabs = { FishingAI = fishingAIFrame, Teleport = teleportFrame, Player = playerFrame, Feature = featureFrame, Dashboard = dashboardFrame, Event = eventFrame }
+    local Tabs = { FishingAI = fishingAIFrame, Teleport = teleportFrame, Player = playerFrame, Feature = featureFrame, Dashboard = dashboardFrame }
     local function SwitchTo(name)
         for k, v in pairs(Tabs) do
             v.Visible = (k == name)
@@ -4599,8 +4208,6 @@ local function BuildUI()
             featureTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             dashboardTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
             dashboardTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            eventTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            eventTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             contentTitle.Text = "Smart AI Fishing Configuration"
         elseif name == "Teleport" then
             teleportTabBtn.BackgroundColor3 = Color3.fromRGB(45,45,50)
@@ -4613,8 +4220,6 @@ local function BuildUI()
             featureTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             dashboardTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
             dashboardTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            eventTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            eventTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             contentTitle.Text = "Island Locations"
         elseif name == "Player" then
             playerTabBtn.BackgroundColor3 = Color3.fromRGB(45,45,50)
@@ -4627,8 +4232,6 @@ local function BuildUI()
             featureTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             dashboardTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
             dashboardTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            eventTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            eventTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             contentTitle.Text = "Player Teleport"
             updatePlayerList(searchBox.Text) -- Refresh when switching to player tab
         elseif name == "Feature" then
@@ -4642,23 +4245,7 @@ local function BuildUI()
             playerTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             dashboardTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
             dashboardTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            eventTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            eventTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             contentTitle.Text = "Character Features"
-        elseif name == "Event" then
-            eventTabBtn.BackgroundColor3 = Color3.fromRGB(45,45,50)
-            eventTabBtn.TextColor3 = Color3.fromRGB(235,235,235)
-            fishingAITabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            fishingAITabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            teleportTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            teleportTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            playerTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            playerTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            featureTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            featureTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            dashboardTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            dashboardTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            contentTitle.Text = "Admin Event Detector"
         else -- Dashboard
             dashboardTabBtn.BackgroundColor3 = Color3.fromRGB(45,45,50)
             dashboardTabBtn.TextColor3 = Color3.fromRGB(235,235,235)
@@ -4670,8 +4257,6 @@ local function BuildUI()
             playerTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             featureTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
             featureTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
-            eventTabBtn.BackgroundColor3 = Color3.fromRGB(40,40,46)
-            eventTabBtn.TextColor3 = Color3.fromRGB(200,200,200)
             contentTitle.Text = "Fishing Analytics"
         end
     end
@@ -4681,7 +4266,6 @@ local function BuildUI()
     playerTabBtn.MouseButton1Click:Connect(function() SwitchTo("Player") end)
     featureTabBtn.MouseButton1Click:Connect(function() SwitchTo("Feature") end)
     dashboardTabBtn.MouseButton1Click:Connect(function() SwitchTo("Dashboard") end)
-    eventTabBtn.MouseButton1Click:Connect(function() SwitchTo("Event") end)
 
     -- Start with FishingAI visible (replaces Main)
     SwitchTo("FishingAI")
