@@ -75,49 +75,58 @@ local Window = {}
 Window.__index = Window
 
 function Window:new(options)
-    local self = setmetatable({}, Window)
+    local success, result = pcall(function()
+        local self = setmetatable({}, Window)
+        
+        -- Default options
+        self.Options = {
+            Name = options.Name or "Orion Library",
+            HidePremium = options.HidePremium or true,
+            SaveConfig = options.SaveConfig or false,
+            ConfigFolder = options.ConfigFolder or "OrionConfig",
+            IntroEnabled = options.IntroEnabled or false,
+            IntroText = options.IntroText or "Welcome!",
+            IntroIcon = options.IntroIcon or ""
+        }
+        
+        self.Tabs = {}
+        self.CurrentTab = nil
+        self.Visible = true
+        
+        self:CreateWindow()
+        
+        return self
+    end)
     
-    -- Default options
-    self.Options = {
-        Name = options.Name or "Orion Library",
-        HidePremium = options.HidePremium or true,
-        SaveConfig = options.SaveConfig or false,
-        ConfigFolder = options.ConfigFolder or "OrionConfig",
-        IntroEnabled = options.IntroEnabled or false,
-        IntroText = options.IntroText or "Welcome!",
-        IntroIcon = options.IntroIcon or ""
-    }
-    
-    self.Tabs = {}
-    self.CurrentTab = nil
-    self.Visible = true
-    
-    self:CreateWindow()
-    
-    return self
+    if success and result then
+        return result
+    else
+        error("Failed to create window: " .. tostring(result))
+    end
 end
 
 function Window:CreateWindow()
-    -- Main ScreenGui
-    self.ScreenGui = Instance.new("ScreenGui")
-    self.ScreenGui.Name = "OrionUI"
-    self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    self.ScreenGui.ResetOnSpawn = false
-    
-    -- Protect from deletion
-    if syn and syn.protect_gui then
-        syn.protect_gui(self.ScreenGui)
-    elseif gethui then
-        self.ScreenGui.Parent = gethui()
-    else
-        self.ScreenGui.Parent = CoreGui
-    end
-    
-    -- Main Frame
-    self.MainFrame = Instance.new("Frame")
-    self.MainFrame.Name = "MainFrame"
-    self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
-    self.MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+    local success, error_msg = pcall(function()
+        -- Main ScreenGui
+        self.ScreenGui = Instance.new("ScreenGui")
+        self.ScreenGui.Name = "OrionUI"
+        self.ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        self.ScreenGui.ResetOnSpawn = false
+        
+        -- Protect from deletion
+        if syn and syn.protect_gui then
+            syn.protect_gui(self.ScreenGui)
+        elseif gethui then
+            self.ScreenGui.Parent = gethui()
+        else
+            self.ScreenGui.Parent = CoreGui
+        end
+        
+        -- Main Frame
+        self.MainFrame = Instance.new("Frame")
+        self.MainFrame.Name = "MainFrame"
+        self.MainFrame.Size = UDim2.new(0, 600, 0, 400)
+        self.MainFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
     self.MainFrame.BackgroundColor3 = Config.Theme.MainColor
     self.MainFrame.BackgroundTransparency = Config.UI.BackgroundTransparency
     self.MainFrame.BorderSizePixel = 0
@@ -222,6 +231,11 @@ function Window:CreateWindow()
     -- Create floating button if enabled
     if Config.UI.FloatingButton then
         self:CreateFloatingButton()
+    end
+    end)
+    
+    if not success then
+        error("Failed to create ORION window: " .. tostring(error_msg))
     end
 end
 

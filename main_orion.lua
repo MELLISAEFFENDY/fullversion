@@ -10,14 +10,34 @@ local function loadOrionLib()
     print("📚 Loading ORION Library...")
     local success, orionLib = pcall(function()
         local url = GITHUB_BASE .. "orion_lib.lua"
+        print("🌐 Fetching from: " .. url)
+        
         local orionCode = game:HttpGet(url)
-        if orionCode and orionCode ~= "" then
-            local orionFunc = loadstring(orionCode)
-            if orionFunc then
-                return orionFunc()
-            end
+        if not orionCode or orionCode == "" then
+            error("Empty response from ORION library URL")
         end
-        return nil
+        
+        print("📝 ORION code length: " .. #orionCode .. " characters")
+        
+        local orionFunc = loadstring(orionCode)
+        if not orionFunc then
+            error("Failed to compile ORION library code")
+        end
+        
+        print("⚙️ Executing ORION library...")
+        local lib = orionFunc()
+        if not lib then
+            error("ORION library returned nil")
+        end
+        
+        if not lib.MakeWindow then
+            error("ORION library missing MakeWindow function")
+        end
+        
+        print("🔍 ORION library type: " .. type(lib))
+        print("🔍 MakeWindow type: " .. type(lib.MakeWindow))
+        
+        return lib
     end)
     
     if success and orionLib then
