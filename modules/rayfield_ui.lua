@@ -77,7 +77,11 @@ function RayfieldUI.init(modules)
     -- Initialize Fish Tracker if available
     if modules.fish_tracker then
         print("🐟 Initializing Fish Tracker...")
-        modules.fish_tracker.init()
+        if modules.fish_tracker.initialize then
+            modules.fish_tracker.initialize()
+        else
+            print("⚠️ Fish Tracker has no initialize method")
+        end
         
         -- Set up callback for UI updates
         if modules.fish_tracker.setUpdateCallback then
@@ -95,8 +99,12 @@ function RayfieldUI.init(modules)
         error("❌ Rayfield Library not available")
     end
     
+    if not RayfieldLib.CreateWindow then
+        error("❌ Rayfield Library missing CreateWindow function")
+    end
+    
     print("🎨 Creating Rayfield UI Window...")
-    print("📋 Window config:", config.Name, config.Icon)
+    print("📋 Window config:", config.Name)
     
     -- Create main window
     local success, window = pcall(function()
