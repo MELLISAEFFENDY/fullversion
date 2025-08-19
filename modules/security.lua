@@ -336,7 +336,14 @@ end
 -- Initialize function
 function Security.initialize()
     print("🛡️ Security: Initializing...")
-    Security.startMonitoring()
+    -- Initialize security features
+    Security.resetSuspicion()
+    if Security.config.antiAfkEnabled then
+        Security.enableAntiAfk()
+    end
+    if Security.config.autoReconnectEnabled then
+        Security.enableAutoReconnect()
+    end
     print("🛡️ Security: Initialization complete")
 end
 
