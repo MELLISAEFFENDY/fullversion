@@ -3,32 +3,37 @@
 
 local OrionUI = {}
 
--- Load our custom ORION Library from GitHub
-local function loadOrionLib()
-    local success, OrionLib = pcall(function()
-        local url = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/orion_lib.lua"
-        local code = game:HttpGet(url)
-        if code and code ~= "" then
-            local func = loadstring(code)
-            if func then
-                return func()
-            else
-                error("Failed to compile custom ORION library")
-            end
-        else
-            error("Failed to download custom ORION library")
-        end
-    end)
-    
-    if success and OrionLib then
-        print("✅ Custom ORION Library loaded successfully")
-        return OrionLib
+-- Use globally loaded ORION Library or load it if not available
+local function getOrionLib()
+    if getgenv().OrionLib then
+        print("✅ Using globally loaded ORION Library")
+        return getgenv().OrionLib
     else
-        error("Failed to load custom ORION library: " .. tostring(OrionLib))
+        print("📚 Loading ORION Library for UI module...")
+        local success, OrionLib = pcall(function()
+            local url = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/orion_lib.lua"
+            local code = game:HttpGet(url)
+            if code and code ~= "" then
+                local func = loadstring(code)
+                if func then
+                    return func()
+                else
+                    error("Failed to compile custom ORION library")
+                end
+            else
+                error("Failed to download custom ORION library")
+            end
+        end)
+        
+        if success and OrionLib then
+            print("✅ Custom ORION Library loaded successfully")
+            getgenv().OrionLib = OrionLib -- Store globally for reuse
+            return OrionLib
+        else
+            error("Failed to load custom ORION library: " .. tostring(OrionLib))
+        end
     end
 end
-
-local OrionLib = loadOrionLib()
 OrionUI.Window = nil
 OrionUI.Tabs = {}
 OrionUI.Elements = {}
@@ -49,7 +54,19 @@ local config = {
 
 -- Initialize ORION UI
 function OrionUI.init(modules)
+    if not modules then
+        error("❌ No modules provided to ORION UI")
+    end
+    
     OrionUI.modules = modules
+    
+    -- Get ORION Library
+    local OrionLib = getOrionLib()
+    if not OrionLib then
+        error("❌ ORION Library not available")
+    end
+    
+    print("🎨 Creating ORION UI Window...")
     
     -- Create main window with error handling
     local success, window = pcall(function()
@@ -65,10 +82,11 @@ function OrionUI.init(modules)
     end)
     
     if not success or not window then
-        error("Failed to create ORION window: " .. tostring(window))
+        error("❌ Failed to create ORION window: " .. tostring(window))
     end
     
     OrionUI.Window = window
+    print("✅ ORION UI Window created successfully")
     
     -- Create tabs with error handling
     local tabSuccess, tabError = pcall(function()

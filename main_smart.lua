@@ -91,15 +91,18 @@ local function tryLoadOrionUI()
     print("🌟 Attempting to load ORION UI...")
     
     local success, result = pcall(function()
-        -- First try to load ORION library
-        local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+        -- Load our custom ORION library first
+        local customOrionLib = loadstring(game:HttpGet(GITHUB_BASE .. 'orion_lib.lua'))()
         
-        if OrionLib then
-            -- If ORION loads successfully, load our ORION UI module
+        if customOrionLib then
+            -- Store the library globally for modules to use
+            getgenv().OrionLib = customOrionLib
+            
+            -- Now load our ORION UI module
             local orionModule = safeLoadModule("orion_ui")
             return orionModule
         else
-            error("ORION library failed to load")
+            error("Custom ORION library failed to load")
         end
     end)
     

@@ -5,6 +5,31 @@
 print("🎣 AutoFish Pro - ORION Edition")
 print("Loading modules...")
 
+-- Load ORION library first
+local function loadOrionLib()
+    print("📚 Loading ORION Library...")
+    local success, orionLib = pcall(function()
+        local url = GITHUB_BASE .. "orion_lib.lua"
+        local orionCode = game:HttpGet(url)
+        if orionCode and orionCode ~= "" then
+            local orionFunc = loadstring(orionCode)
+            if orionFunc then
+                return orionFunc()
+            end
+        end
+        return nil
+    end)
+    
+    if success and orionLib then
+        print("✅ ORION Library loaded successfully")
+        getgenv().OrionLib = orionLib -- Make it globally available
+        return orionLib
+    else
+        print("❌ Failed to load ORION Library: " .. tostring(orionLib))
+        return nil
+    end
+end
+
 -- GitHub Repository Configuration
 local GITHUB_BASE = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/"
 
@@ -102,7 +127,13 @@ end
 local function initializeAutoFish()
     print("🚀 Initializing AutoFish Pro...")
     
-    -- Load configuration first
+    -- Load ORION library first (required for UI)
+    local orionLib = loadOrionLib()
+    if not orionLib then
+        error("❌ Failed to load ORION library - UI cannot be created")
+    end
+    
+    -- Load configuration
     local config = loadConfig()
     
     -- Load all modules
