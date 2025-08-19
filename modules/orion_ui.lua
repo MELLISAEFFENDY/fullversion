@@ -3,26 +3,28 @@
 
 local OrionUI = {}
 
--- Load ORION Library with fallback
+-- Load our custom ORION Library from GitHub
 local function loadOrionLib()
     local success, OrionLib = pcall(function()
-        return loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+        local url = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/orion_lib.lua"
+        local code = game:HttpGet(url)
+        if code and code ~= "" then
+            local func = loadstring(code)
+            if func then
+                return func()
+            else
+                error("Failed to compile custom ORION library")
+            end
+        else
+            error("Failed to download custom ORION library")
+        end
     end)
     
     if success and OrionLib then
+        print("✅ Custom ORION Library loaded successfully")
         return OrionLib
     else
-        -- Try alternative URL
-        local success2, OrionLib2 = pcall(function()
-            return loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source.lua'))()
-        end)
-        
-        if success2 and OrionLib2 then
-            return OrionLib2
-        else
-            -- If both fail, create a fallback notification
-            error("Failed to load ORION library. Please check your internet connection.")
-        end
+        error("Failed to load custom ORION library: " .. tostring(OrionLib))
     end
 end
 
