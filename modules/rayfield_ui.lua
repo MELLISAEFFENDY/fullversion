@@ -40,22 +40,6 @@ local function getRayfieldLib()
         end
     end
 end
-                    error("Failed to compile custom Rayfield library")
-                end
-            else
-                error("Failed to download custom Rayfield library")
-            end
-        end)
-        
-        if success and RayfieldLib then
-            print("✅ Custom Rayfield Library loaded successfully")
-            getgenv().RayfieldLib = RayfieldLib -- Store globally for reuse
-            return RayfieldLib
-        else
-            error("Failed to load custom Rayfield library: " .. tostring(RayfieldLib))
-        end
-    end
-end
 
 RayfieldUI.Window = nil
 RayfieldUI.Tabs = {}
