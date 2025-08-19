@@ -5,6 +5,8 @@ local RayfieldUI = {}
 
 -- Use globally loaded Rayfield Library or load it if not available
 local function getRayfieldLib()
+    print("🔍 Checking for Rayfield Library...")
+    
     if getgenv().RayfieldLib then
         print("✅ Using globally loaded Rayfield Library")
         return getgenv().RayfieldLib
@@ -12,12 +14,32 @@ local function getRayfieldLib()
         print("📚 Loading Rayfield Library for UI module...")
         local success, RayfieldLib = pcall(function()
             local url = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/rayfield_lib.lua"
+            print("📡 Downloading from:", url)
             local code = game:HttpGet(url)
             if code and code ~= "" then
+                print("✅ Code downloaded, length:", #code)
                 local func = loadstring(code)
                 if func then
+                    print("✅ Code compiled, executing...")
                     return func()
                 else
+                    print("❌ Failed to compile Rayfield Library code")
+                end
+            else
+                print("❌ Failed to download Rayfield Library or empty response")
+            end
+        end)
+        
+        if success and RayfieldLib then
+            print("✅ Rayfield Library loaded successfully")
+            getgenv().RayfieldLib = RayfieldLib
+            return RayfieldLib
+        else
+            print("❌ Failed to load Rayfield Library:", tostring(RayfieldLib))
+            return nil
+        end
+    end
+end
                     error("Failed to compile custom Rayfield library")
                 end
             else
@@ -56,6 +78,11 @@ local config = {
 }
 
 -- Initialize Rayfield UI
+function RayfieldUI.initialize(modules)
+    print("📱 RayfieldUI: Initializing...")
+    return RayfieldUI.init(modules)
+end
+
 function RayfieldUI.init(modules)
     if not modules then
         error("❌ No modules provided to Rayfield UI")
@@ -85,18 +112,26 @@ function RayfieldUI.init(modules)
     end
     
     print("🎨 Creating Rayfield UI Window...")
+    print("📋 Window config:", config.Name, config.Icon)
     
     -- Create main window
     local success, window = pcall(function()
-        return RayfieldLib:CreateWindow(config)
+        print("📱 Calling RayfieldLib:CreateWindow...")
+        local w = RayfieldLib:CreateWindow(config)
+        print("📱 Window created:", w and "✅" or "❌")
+        return w
     end)
     
-    if not success or not window then
+    if not success then
+        print("❌ Error creating window:", tostring(window))
         error("❌ Failed to create Rayfield window: " .. tostring(window))
+    elseif not window then
+        print("❌ Window is nil")
+        error("❌ Rayfield window is nil")
     end
     
     RayfieldUI.Window = window
-    print("✅ Rayfield UI Window created successfully")
+    print("✅ Rayfield UI Window created and stored successfully")
     
     -- Create tabs with error handling
     local tabSuccess, tabError = pcall(function()

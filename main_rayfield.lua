@@ -237,12 +237,36 @@ local function initializeAutoFish()
             end
         end)
         print("Autofish init:", ok and "✅" or "❌ " .. tostring(err))
-    end    -- Initialize UI (Rayfield UI or fallback to custom UI)
+    end
+    
+    print("🔧 Initializing UI...")
+    
+    -- Initialize UI (Rayfield UI or fallback to custom UI)
     local uiModule = modules.rayfield_ui or modules.ui
     local uiType = modules.rayfield_ui and "Rayfield" or "Custom"
     
+    print("📱 UI Module found:", uiModule and "✅" or "❌")
+    print("📱 UI Type:", uiType)
+    
     if uiModule then
-        pcall(function() uiModule.initialize(modules) end)
+        print("📱 Starting UI initialization...")
+        local ok, err = pcall(function() 
+            if uiModule.initialize then
+                uiModule.initialize(modules)
+                print("📱 UI.initialize() called successfully")
+            else
+                print("❌ UI module has no initialize method")
+                -- Try alternative initialization methods
+                if uiModule.init then
+                    uiModule.init(modules)
+                    print("📱 UI.init() called successfully")
+                elseif uiModule.createInterface then
+                    uiModule.createInterface(modules)
+                    print("📱 UI.createInterface() called successfully")
+                end
+            end
+        end)
+        print("UI init:", ok and "✅" or "❌ " .. tostring(err))
         
         -- Show welcome notification
         if uiModule.showNotification then
@@ -252,6 +276,8 @@ local function initializeAutoFish()
                 5
             )
         end
+    else
+        print("❌ No UI module found!")
     end
     
     print("✅ AutoFish Pro initialization complete!")
