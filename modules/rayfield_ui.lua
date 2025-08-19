@@ -63,6 +63,21 @@ function RayfieldUI.init(modules)
     
     RayfieldUI.modules = modules
     
+    -- Initialize Fish Tracker if available
+    if modules.fish_tracker then
+        print("🐟 Initializing Fish Tracker...")
+        modules.fish_tracker.init()
+        
+        -- Set up callback for UI updates
+        if modules.fish_tracker.setUpdateCallback then
+            modules.fish_tracker.setUpdateCallback(function(stats)
+                if RayfieldUI.updateFishStats then
+                    RayfieldUI.updateFishStats(stats)
+                end
+            end)
+        end
+    end
+    
     -- Get Rayfield Library
     local RayfieldLib = getRayfieldLib()
     if not RayfieldLib then
@@ -181,6 +196,11 @@ function RayfieldUI.createAutoFishTab()
         end
     })
     
+    -- Info section
+    tab:CreateLabel({
+        Text = "⚙️ AutoFish Configuration"
+    })
+    
     -- Cast Power Slider
     RayfieldUI.Elements.CastPowerSlider = tab:CreateSlider({
         Name = "Cast Power",
@@ -215,6 +235,83 @@ function RayfieldUI.createAutoFishTab()
         Callback = function(value)
             if autofish.setFishDetection then
                 autofish.setFishDetection(value)
+            end
+        end
+    })
+    
+    -- AutoFish Mode Dropdown
+    RayfieldUI.Elements.AutoFishModeDropdown = tab:CreateDropdown({
+        Name = "🧠 AutoFish Mode",
+        Options = {"Smart", "Secure"},
+        CurrentOption = "Smart",
+        Flag = "AutoFishMode",
+        Callback = function(option)
+            if autofish.setMode then
+                autofish.setMode(option:lower())
+                print("🔧 AutoFish mode changed to: " .. option)
+            end
+        end
+    })
+    
+    -- Mode Info Label
+    tab:CreateLabel({
+        Text = "• Smart: High efficiency, medium safety"
+    })
+    
+    tab:CreateLabel({
+        Text = "• Secure: Lower efficiency, high safety"
+    })
+    
+    -- Recast Delay Slider
+    RayfieldUI.Elements.RecastDelaySlider = tab:CreateSlider({
+        Name = "⏱️ Recast Delay (seconds)",
+        Range = {0.1, 3.0},
+        Increment = 0.1,
+        CurrentValue = 0.4,
+        Flag = "RecastDelay",
+        Callback = function(value)
+            if autofish.setCastDelay then
+                autofish.setCastDelay(value)
+                print("⏱️ Recast delay set to: " .. value .. "s")
+            end
+        end
+    })
+    
+    -- Perfect Catch Toggle
+    RayfieldUI.Elements.PerfectCatchToggle = tab:CreateToggle({
+        Name = "🎯 Perfect Catch Mode",
+        CurrentValue = false,
+        Flag = "PerfectCatch",
+        Callback = function(value)
+            if autofish.setPerfectCatch then
+                autofish.setPerfectCatch(value)
+            end
+        end
+    })
+    
+    -- Safe Mode Chance Slider (for perfect catch percentage)
+    RayfieldUI.Elements.SafeModeChanceSlider = tab:CreateSlider({
+        Name = "🛡️ Perfect Catch Rate (%)",
+        Range = {0, 100},
+        Increment = 5,
+        CurrentValue = 70,
+        Flag = "SafeModeChance",
+        Callback = function(value)
+            if autofish.config then
+                autofish.config.safeModeChance = value
+                print("🛡️ Perfect catch rate set to: " .. value .. "%")
+            end
+        end
+    })
+    
+    -- Auto Recast Toggle
+    RayfieldUI.Elements.AutoRecastToggle = tab:CreateToggle({
+        Name = "🔄 Auto Recast",
+        CurrentValue = true,
+        Flag = "AutoRecast",
+        Callback = function(value)
+            if autofish.setAutoRecast then
+                autofish.setAutoRecast(value)
             end
         end
     })
@@ -531,6 +628,45 @@ function RayfieldUI.updateDashboard()
     end
 end
 
+-- Update fish statistics from Fish Tracker
+function RayfieldUI.updateFishStats(stats)
+    if not stats then return end
+    
+    pcall(function()
+        -- Update fish caught display
+        if RayfieldUI.Elements.FishCaughtLabel and stats.totalFish then
+            RayfieldUI.Elements.FishCaughtLabel.Name = "🐟 Fish Caught: " .. tostring(stats.totalFish)
+        end
+        
+        -- Update revenue display
+        if RayfieldUI.Elements.RevenueLabel and stats.totalValue then
+            RayfieldUI.Elements.RevenueLabel.Name = "💰 Total Revenue: $" .. tostring(stats.totalValue)
+        end
+        
+        -- Update runtime display
+        if RayfieldUI.Elements.RuntimeLabel and stats.sessionTime then
+            local hours = math.floor(stats.sessionTime / 3600)
+            local minutes = math.floor((stats.sessionTime % 3600) / 60)
+            local seconds = math.floor(stats.sessionTime % 60)
+            local timeStr = string.format("%02d:%02d:%02d", hours, minutes, seconds)
+            RayfieldUI.Elements.RuntimeLabel.Name = "⏱️ Runtime: " .. timeStr
+        end
+        
+        -- Update status based on activity
+        if RayfieldUI.Elements.StatusLabel then
+            local status = "Idle"
+            if RayfieldUI.modules.autofish and RayfieldUI.modules.autofish.isRunning and RayfieldUI.modules.autofish.isRunning() then
+                status = "Fishing Active"
+            elseif stats.lastCatch and (tick() - stats.lastCatch) < 30 then
+                status = "Recently Active"
+            end
+            RayfieldUI.Elements.StatusLabel.Name = "📊 Status: " .. status
+        end
+        
+        print("🔄 Dashboard updated with fish stats: " .. tostring(stats.totalFish) .. " fish caught")
+    end)
+end
+
 -- Utility functions
 function RayfieldUI.showNotification(title, message, duration)
     print("📢 " .. title .. ": " .. message)
@@ -837,15 +973,28 @@ function RayfieldUI.createFloatingButton()
             if not dragging then
                 if RayfieldUI.Window and RayfieldUI.Window.MainFrame then
                     local currentVisibility = RayfieldUI.Window.MainFrame.Visible
-                    RayfieldUI.Window.MainFrame.Visible = not currentVisibility
                     
-                    if not currentVisibility then
+                    if currentVisibility then
+                        -- Minimize UI
+                        if RayfieldUI.Window.Minimize then
+                            RayfieldUI.Window:Minimize()
+                        else
+                            RayfieldUI.Window.MainFrame.Visible = false
+                        end
+                        print("� UI minimized to floating button")
+                        FloatingButton.Text = "📱"
+                    else
+                        -- Show UI
+                        if RayfieldUI.Window.Show then
+                            RayfieldUI.Window:Show()
+                        else
+                            RayfieldUI.Window.MainFrame.Visible = true
+                        end
                         print("🔸 UI shown from floating button")
                         FloatingButton.Text = "🎣"
-                    else
-                        print("🔹 UI minimized to floating button")
-                        FloatingButton.Text = "📱"
                     end
+                else
+                    print("❌ Window not available for toggle")
                 end
             end
         end)
@@ -929,6 +1078,71 @@ function RayfieldUI.updateFloatingButtonAppearance()
             button.Text = isUIVisible and "🎣" or "📱"
         end
     end
+end
+
+-- Enhanced UI Toggle Function with Multiple Fallbacks
+function RayfieldUI.toggleUIVisibility()
+    print("🔸 Attempting to toggle UI visibility...")
+    local toggleSuccess = false
+    
+    -- Method 1: Direct Window access
+    if RayfieldUI.Window then
+        print("🔍 Method 1: Direct Window access")
+        
+        -- Try to determine current state
+        local isVisible = true
+        if RayfieldUI.Window.MainFrame and RayfieldUI.Window.MainFrame.Visible ~= nil then
+            isVisible = RayfieldUI.Window.MainFrame.Visible
+            print("🔍 Current MainFrame visibility:", isVisible)
+        end
+        
+        if isVisible then
+            -- Try to minimize
+            if RayfieldUI.Window.Minimize then
+                print("🔸 Using Window:Minimize()")
+                RayfieldUI.Window:Minimize()
+                toggleSuccess = true
+            elseif RayfieldUI.Window.MainFrame then
+                print("🔸 Setting MainFrame.Visible = false")
+                RayfieldUI.Window.MainFrame.Visible = false
+                toggleSuccess = true
+            end
+        else
+            -- Try to show
+            if RayfieldUI.Window.Show then
+                print("🔸 Using Window:Show()")
+                RayfieldUI.Window:Show()
+                toggleSuccess = true
+            elseif RayfieldUI.Window.MainFrame then
+                print("🔸 Setting MainFrame.Visible = true")
+                RayfieldUI.Window.MainFrame.Visible = true
+                toggleSuccess = true
+            end
+        end
+    end
+    
+    -- Method 2: getgenv API access
+    if not toggleSuccess then
+        print("🔍 Method 2: getgenv API access")
+        if getgenv().AutoFishPro then
+            -- Check current floating button state to determine action
+            local shouldShow = true
+            if RayfieldUI.FloatingButton and RayfieldUI.FloatingButton.Button then
+                shouldShow = RayfieldUI.FloatingButton.Button.Text == "📱"
+            end
+            
+            if shouldShow and getgenv().AutoFishPro.showUI then
+                getgenv().AutoFishPro.showUI()
+                toggleSuccess = true
+            elseif not shouldShow and getgenv().AutoFishPro.hideUI then
+                getgenv().AutoFishPro.hideUI()
+                toggleSuccess = true
+            end
+        end
+    end
+    
+    print("🔸 Toggle result:", toggleSuccess and "Success" or "Failed")
+    return toggleSuccess
 end
 
 -- Enhanced Fishing Tab (Simplified)
@@ -1515,5 +1729,52 @@ function RayfieldUI.destroyFloatingButton()
         print("🎯 Floating Button: Destroyed")
     end
 end
+
+-- Runtime fixes for floating button functionality
+spawn(function()
+    wait(2) -- Wait for UI to initialize
+    
+    -- Fix floating button click handlers if they exist
+    if RayfieldUI.FloatingButton and RayfieldUI.FloatingButton.Button then
+        local button = RayfieldUI.FloatingButton.Button
+        print("🔧 Applying floating button fixes...")
+        
+        -- Override MouseButton1Click with improved logic
+        button.MouseButton1Click:Connect(function()
+            print("🔸 Enhanced floating button clicked")
+            
+            -- Simple toggle logic with multiple fallbacks
+            local toggleSuccess = false
+            
+            if RayfieldUI.Window then
+                if RayfieldUI.Window.MainFrame then
+                    local isVisible = RayfieldUI.Window.MainFrame.Visible
+                    RayfieldUI.Window.MainFrame.Visible = not isVisible
+                    toggleSuccess = true
+                    print("🔸 Toggled MainFrame visibility to:", not isVisible)
+                    button.Text = isVisible and "📱" or "🎣"
+                end
+            end
+            
+            if not toggleSuccess then
+                print("🔄 Trying alternative methods...")
+                -- Try getgenv access
+                if getgenv().AutoFishPro then
+                    if button.Text == "📱" then
+                        if getgenv().AutoFishPro.showUI then
+                            getgenv().AutoFishPro.showUI()
+                            button.Text = "🎣"
+                        end
+                    else
+                        if getgenv().AutoFishPro.hideUI then
+                            getgenv().AutoFishPro.hideUI()
+                            button.Text = "📱"
+                        end
+                    end
+                end
+            end
+        end)
+    end
+end)
 
 return RayfieldUI

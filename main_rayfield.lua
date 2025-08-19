@@ -60,7 +60,8 @@ local moduleNames = {
     "movement", 
     "autosell",
     "security",
-    "dashboard"
+    "dashboard",
+    "fish_tracker"
 }
 
 -- Safe module loading function
@@ -186,14 +187,18 @@ local function initializeAutoFish()
         modules.security.init(config.security or {})
     end
     
+    if modules.fish_tracker then
+        modules.fish_tracker.init()
+    end
+
     if modules.dashboard then
         modules.dashboard.init(modules)
     end
-    
+
     if modules.movement then
         modules.movement.init(config.movement or {})
     end
-    
+
     if modules.autosell then
         modules.autosell.init(config.autosell or {})
     end
@@ -320,14 +325,24 @@ getgenv().AutoFishPro = {
     
     showUI = function()
         if loadedModules and loadedModules.rayfield_ui and loadedModules.rayfield_ui.Window then
-            -- Rayfield doesn't have SetVisible, but window should be visible by default
-            print("🎮 Rayfield UI is already visible")
+            if loadedModules.rayfield_ui.Window.Show then
+                loadedModules.rayfield_ui.Window:Show()
+                print("🎮 Rayfield UI restored")
+            else
+                print("🎮 Rayfield UI is already visible")
+            end
         end
     end,
     
     hideUI = function()
         if loadedModules and loadedModules.rayfield_ui and loadedModules.rayfield_ui.Window then
-            loadedModules.rayfield_ui.Window:Destroy()
+            if loadedModules.rayfield_ui.Window.Minimize then
+                loadedModules.rayfield_ui.Window:Minimize()
+                print("🎮 Rayfield UI minimized")
+            elseif loadedModules.rayfield_ui.Window.Destroy then
+                loadedModules.rayfield_ui.Window:Destroy()
+                print("🎮 Rayfield UI destroyed")
+            end
         end
     end
 }

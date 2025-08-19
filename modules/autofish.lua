@@ -18,7 +18,12 @@ AutoFish.config = {
     safeModeChance = 70,
     enabled = false,
     maxActionsPerMinute = 12000000,
-    detectionCooldown = 5
+    detectionCooldown = 5,
+    fishDetection = true,
+    autoCast = true,
+    autoRecast = true,
+    perfectCatch = false,
+    castPower = 75
 }
 
 -- Internal state
@@ -246,8 +251,8 @@ function AutoFish.stop()
 end
 
 function AutoFish.setMode(mode)
-    if mode == "smart" or mode == "secure" then
-        AutoFish.config.mode = mode
+    if mode and (mode:lower() == "smart" or mode:lower() == "secure") then
+        AutoFish.config.mode = mode:lower()
         notify("AutoFish", "Mode changed to: " .. mode)
         return true
     end
@@ -266,13 +271,6 @@ end
 -- New functions for ORION UI compatibility
 function AutoFish.isRunning()
     return AutoFish.config.enabled
-end
-
-function AutoFish.setMode(mode)
-    if mode then
-        AutoFish.config.mode = mode:lower()
-        notify("AutoFish", "Mode changed to: " .. mode)
-    end
 end
 
 function AutoFish.setCastPower(power)
@@ -296,6 +294,23 @@ function AutoFish.setCastDelay(delay)
     if delay and delay >= 0.1 and delay <= 5.0 then
         AutoFish.config.autoRecastDelay = delay
         notify("AutoFish", "Cast delay set to: " .. delay .. "s")
+    end
+end
+
+function AutoFish.setFishDetection(enabled)
+    AutoFish.config.fishDetection = enabled
+    notify("AutoFish", "Fish detection: " .. (enabled and "enabled" or "disabled"))
+end
+
+function AutoFish.setAutoCast(enabled)
+    AutoFish.config.autoCast = enabled
+    notify("AutoFish", "Auto cast: " .. (enabled and "enabled" or "disabled"))
+end
+
+function AutoFish.setSafeModeChance(chance)
+    if chance and chance >= 0 and chance <= 100 then
+        AutoFish.config.safeModeChance = chance
+        notify("AutoFish", "Perfect catch rate set to: " .. chance .. "%")
     end
 end
 
