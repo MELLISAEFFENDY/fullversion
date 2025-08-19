@@ -27,69 +27,124 @@ end
 -- HTTP Service for loading external scripts
 local HttpService = game:GetService("HttpService")
 
--- Event Detector Module URL
-local EVENT_DETECTOR_URL = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/event_detector.lua"
+-- Event Detector Module URLs (multiple sources for reliability)
+local EVENT_DETECTOR_URLS = {
+    "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/event_detector.lua",
+    "https://cdn.jsdelivr.net/gh/MELLISAEFFENDY/fullversion@main/event_detector.lua"
+}
 
 -- Event Detector globals that will be set by external script
 local EventDetector = nil
 local ScanEventLocations = nil
 local TeleportToEvent = nil
 
--- Function to load Event Detector from GitHub
+-- Function to load Event Detector from GitHub with better error handling
 local function LoadEventDetector()
-    local success, result = pcall(function()
-        print("🔄 Loading Event Detector from GitHub...")
-        
-        -- Get the script content
-        local scriptContent = game:HttpGet(EVENT_DETECTOR_URL)
-        
-        -- Load and execute the script
-        local loadedScript = loadstring(scriptContent)
-        if loadedScript then
-            loadedScript()
-            print("✅ Event Detector loaded successfully!")
-            return true
-        else
-            warn("❌ Failed to load Event Detector script")
-            return false
-        end
-    end)
+    print("🔄 Initializing Event Detector...")
     
-    if not success then
-        warn("❌ HTTP request failed:", result)
-        print("🔄 Using local fallback...")
-        
-        -- Fallback: Create minimal local version
-        EventDetector = {
-            detectedEvents = {},
-            eventLocations = {},
-            adminEventsList = {
-                ["Black Hole"] = {
-                    keywords = {"black", "hole", "blackhole"},
-                    icon = "🕳️",
-                    rarity = "MYTHIC",
-                    description = "Fish in Black Hole for x5 mutations!"
-                }
+    -- First, create local fallback to ensure variables are never nil
+    EventDetector = {
+        detectedEvents = {},
+        eventLocations = {},
+        adminEventsList = {
+            ["Black Hole"] = {
+                keywords = {"black", "hole", "blackhole"},
+                icon = "🕳️",
+                rarity = "MYTHIC",
+                description = "Fish in Black Hole for x5 mutations!"
             },
-            isScanning = false,
-            ScanForAdminEvents = function() 
-                print("🔍 Local Event Scanner (fallback)")
-            end
-        }
-        
-        ScanEventLocations = function()
-            print("📍 Local Location Scanner (fallback)")
+            ["Ghost Shark Hunt"] = {
+                keywords = {"ghost", "shark", "hunt"},
+                icon = "👻",
+                rarity = "LEGENDARY",
+                description = "Hunt Ghost Sharks for rare rewards!"
+            },
+            ["Meteor Shower"] = {
+                keywords = {"meteor", "shower"},
+                icon = "☄️",
+                rarity = "EPIC",
+                description = "Fish during meteor shower!"
+            }
+        },
+        isScanning = false,
+        ScanForAdminEvents = function() 
+            print("🔍 Event Scanner (Local Mode)")
+            return {}
         end
-        
-        TeleportToEvent = function(eventName)
-            print("🚀 Local Teleport (fallback):", eventName)
-        end
-        
-        print("✅ Local fallback Event Detector loaded")
-        return true
+    }
+    
+    ScanEventLocations = function()
+        print("📍 Location Scanner (Local Mode)")
+        return {}
     end
     
-    return success
+    TeleportToEvent = function(eventName)
+        print("🚀 Local Teleport:", eventName)
+        return false
+    end
+    
+    print("✅ Local Event Detector initialized")
+    
+    -- Try to load remote version (with timeout and retry protection)
+    task.spawn(function()
+        local attempts = 0
+        local maxAttempts = 3
+        local retryDelay = 5
+        
+        for urlIndex, url in ipairs(EVENT_DETECTOR_URLS) do
+            local urlName = urlIndex == 1 and "GitHub" or "JSDelivr CDN"
+            
+            while attempts < maxAttempts do
+                attempts = attempts + 1
+                print(string.format("🌐 Attempting to load from %s... (Attempt %d/%d)", urlName, attempts, maxAttempts))
+                
+                local success, result = pcall(function()
+                    -- Add cache busting and timeout protection
+                    local cacheUrl = url .. "?cache=" .. tick()
+                    
+                    local scriptContent = game:HttpGet(cacheUrl)
+                    if scriptContent and #scriptContent > 100 then -- Basic validation
+                        local loadedScript = loadstring(scriptContent)
+                        if loadedScript then
+                            loadedScript()
+                            return true
+                        end
+                    end
+                    return false
+                end)
+                
+                if success and result then
+                    print("✅ Remote Event Detector loaded successfully from " .. urlName .. "!")
+                    return
+                else
+                    local errorMsg = tostring(result)
+                    if errorMsg:find("429") then
+                        print("⚠️ " .. urlName .. " rate limit hit. Trying next source...")
+                        break -- Try next URL
+                    elseif errorMsg:find("Http requests are not enabled") then
+                        print("⚠️ HTTP requests disabled. Using local fallback.")
+                        return -- Don't retry if HTTP is disabled
+                    else
+                        print("⚠️ " .. urlName .. " loading failed:", errorMsg)
+                    end
+                    
+                    if attempts < maxAttempts then
+                        print(string.format("⏳ Retrying %s in %d seconds...", urlName, retryDelay))
+                        task.wait(retryDelay)
+                        retryDelay = math.min(retryDelay * 1.5, 30) -- Exponential backoff with cap
+                    end
+                end
+            end
+            
+            -- Reset attempts for next URL
+            attempts = 0
+            retryDelay = 5
+        end
+        
+        print("ℹ️ All remote sources failed. Using local Event Detector fallback.")
+    end)
+    
+    return true
 end
 
 -- Load Event Detector on script start
@@ -4347,12 +4402,22 @@ local function BuildUI()
 
     manualScanBtn.MouseButton1Click:Connect(function()
         pcall(function()
-            if EventDetector and EventDetector.ScanForAdminEvents then
+            -- Safety checks for Event Detector
+            if EventDetector and type(EventDetector) == "table" and EventDetector.ScanForAdminEvents then
                 EventDetector.ScanForAdminEvents()
+                print("🔍 Manual scan triggered via EventDetector")
+            else
+                print("⚠️ EventDetector not available or incomplete")
             end
-            if ScanEventLocations then
+            
+            -- Safety check for ScanEventLocations
+            if ScanEventLocations and type(ScanEventLocations) == "function" then
                 ScanEventLocations()
+                print("📍 Location scan triggered")
+            else
+                print("⚠️ ScanEventLocations function not available")
             end
+            
             Notify("Event Scanner", "🔍 Manual scan completed!")
         end)
     end)
@@ -4369,7 +4434,10 @@ local function BuildUI()
     Instance.new("UICorner", httpLoadBtn)
 
     httpLoadBtn.MouseButton1Click:Connect(function()
-        LoadEventDetector()
+        pcall(function()
+            Notify("Event Detector", "🔄 Reloading Event Detector...")
+            LoadEventDetector()
+        end)
     end)
 
     -- Event List Section
@@ -4452,9 +4520,18 @@ local function BuildUI()
                     Instance.new("UICorner", teleportBtn)
 
                     teleportBtn.MouseButton1Click:Connect(function()
-                        if TeleportToEvent then
-                            TeleportToEvent(eventName)
-                        end
+                        pcall(function()
+                            if TeleportToEvent and type(TeleportToEvent) == "function" then
+                                local success = TeleportToEvent(eventName)
+                                if success then
+                                    Notify("Event Teleport", "🚀 Teleported to " .. eventName)
+                                else
+                                    Notify("Event Teleport", "⚠️ Teleport failed for " .. eventName)
+                                end
+                            else
+                                Notify("Event Teleport", "❌ Teleport function not available")
+                            end
+                        end)
                     end)
 
                     -- Event description
