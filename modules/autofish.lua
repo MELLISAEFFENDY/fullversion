@@ -5,7 +5,19 @@ local AutoFish = {}
 
 -- Services
 local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Replicate    -- Smart mode logic - use perfectCatch toggle OR safeModeChance
+    local usePerfect
+    if AutoFish.config.perfectCatch then
+        usePerfect = true  -- Force perfect if toggle enabled
+        print("[Smart Mode] Perfect catch mode ENABLED - forcing perfect")
+    else
+        usePerfect = math.random(1,100) <= AutoFish.config.safeModeChance
+        print("[Smart Mode] Using perfect catch rate:", AutoFish.config.safeModeChance .. "%")
+    end
+    
+    local timestamp = usePerfect and GetServerTime() or GetServerTime() + math.random()*0.5
+    
+    print("[Smart Mode] Using perfect:", usePerfect, "Timestamp:", timestamp)age = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local StarterGui = game:GetService("StarterGui")
 
@@ -57,10 +69,23 @@ local function ResolveRemote(name)
 end
 
 -- Get remotes
-local rodRemote = ResolveRemote("RF/ChargeFishingRod")
-local miniGameRemote = ResolveRemote("RF/RequestFishingMinigameStarted")
-local finishRemote = ResolveRemote("RE/FishingCompleted")
-local equipRemote = ResolveRemote("RE/EquipToolFromHotbar")
+local function RefreshRemotes()
+    print("[AutoFish] Refreshing remotes...")
+    local rodRemote = ResolveRemote("RF/ChargeFishingRod")
+    local miniGameRemote = ResolveRemote("RF/RequestFishingMinigameStarted")
+    local finishRemote = ResolveRemote("RE/FishingCompleted")
+    local equipRemote = ResolveRemote("RE/EquipToolFromHotbar")
+    
+    print("[AutoFish] Remote status:")
+    print("  Rod Remote:", rodRemote and "✅ Found" or "❌ Not found")
+    print("  MiniGame Remote:", miniGameRemote and "✅ Found" or "❌ Not found")
+    print("  Finish Remote:", finishRemote and "✅ Found" or "❌ Not found")
+    print("  Equip Remote:", equipRemote and "✅ Found" or "❌ Not found")
+    
+    return rodRemote, miniGameRemote, finishRemote, equipRemote
+end
+
+local rodRemote, miniGameRemote, finishRemote, equipRemote = RefreshRemotes()
 
 -- Notification function
 local function notify(title, text)
@@ -127,75 +152,213 @@ end
 
 -- Fishing cycles
 local function DoSmartCycle()
-    -- Equip rod
+    print("[Smart Mode] Starting fishing cycle...")
+    
+    -- Refresh remotes if needed
+    if not rodRemote or not miniGameRemote or not finishRemote or not equipRemote then
+        print("[Smart Mode] Refreshing remotes...")
+        rodRemote, miniGameRemote, finishRemote, equipRemote = RefreshRemotes()
+    end
+    
+    -- Equip rod with cast power
     if equipRemote then 
-        pcall(function() equipRemote:FireServer(1) end)
-        task.wait(0.1)
+        local castPower = AutoFish.config.castPower or 75
+        local ok = pcall(function() 
+            -- Try with cast power parameter
+            equipRemote:FireServer(1, castPower) 
+        end)
+        if not ok then
+            -- Fallback without cast power
+            ok = pcall(function() equipRemote:FireServer(1) end)
+        end
+        
+        if ok then
+            print("[Smart Mode] Rod equipped with cast power:", castPower)
+        else
+            print("[Smart Mode] Failed to equip rod")
+            return false
+        end
+        task.wait(0.3)
+    else
+        print("[Smart Mode] No equip remote found")
+        return false
     end
     
     -- Smart mode logic
     local usePerfect = math.random(1,100) <= AutoFish.config.safeModeChance
     local timestamp = usePerfect and GetServerTime() or GetServerTime() + math.random()*0.5
     
+    print("[Smart Mode] Using perfect:", usePerfect, "Timestamp:", timestamp)
+    
     -- Charge rod
     if rodRemote and rodRemote:IsA("RemoteFunction") then 
-        pcall(function() rodRemote:InvokeServer(timestamp) end)
+        local ok = pcall(function() rodRemote:InvokeServer(timestamp) end)
+        if ok then
+            print("[Smart Mode] Rod charged")
+        else
+            print("[Smart Mode] Failed to charge rod")
+            return false
+        end
+    else
+        print("[Smart Mode] No rod remote found or wrong type")
+        return false
     end
     
-    task.wait(0.1)
+    task.wait(0.3)
     
     -- Mini-game
     local x = usePerfect and -1.238 or (math.random(-1000,1000)/1000)
     local y = usePerfect and 0.969 or (math.random(0,1000)/1000)
+    
+    print("[Smart Mode] Mini-game coordinates:", x, y)
     
     if miniGameRemote and miniGameRemote:IsA("RemoteFunction") then 
-        pcall(function() miniGameRemote:InvokeServer(x,y) end)
+        local ok = pcall(function() miniGameRemote:InvokeServer(x,y) end)
+        if ok then
+            print("[Smart Mode] Mini-game started")
+        else
+            print("[Smart Mode] Failed to start mini-game")
+            return false
+        end
+    else
+        print("[Smart Mode] No mini-game remote found or wrong type")
+        return false
     end
     
-    task.wait(1.3)
-    
-    -- Complete fishing
-    if finishRemote then 
-        pcall(function() finishRemote:FireServer() end)
-    end
-end
-
-local function DoSecureCycle()
-    if inCooldown() then task.wait(1); return end
-    
-    -- Equip rod
-    if equipRemote then 
-        local ok = pcall(function() equipRemote:FireServer(1) end)
-        if not ok then print("[Secure Mode] Failed to equip") end
-    end
-    
-    -- Safe mode logic
-    local usePerfect = math.random(1,100) <= AutoFish.config.safeModeChance
-    
-    -- Charge rod
-    local timestamp = usePerfect and 9999999999 or (tick() + math.random())
-    if rodRemote then
-        local ok = pcall(function() rodRemote:InvokeServer(timestamp) end)
-        if not ok then print("[Secure Mode] Failed to charge") end
-    end
-    
-    task.wait(0.1)
-    
-    -- Mini-game
-    local x = usePerfect and -1.238 or (math.random(-1000,1000)/1000)
-    local y = usePerfect and 0.969 or (math.random(0,1000)/1000)
-    
-    if miniGameRemote then
-        local ok = pcall(function() miniGameRemote:InvokeServer(x, y) end)
-        if not ok then print("[Secure Mode] Failed minigame") end
-    end
-    
-    task.wait(1.3)
+    task.wait(2.0) -- Increased wait time for mini-game to complete
     
     -- Complete fishing
     if finishRemote then 
         local ok = pcall(function() finishRemote:FireServer() end)
-        if not ok then print("[Secure Mode] Failed to finish") end
+        if ok then
+            print("[Smart Mode] Fishing completed successfully!")
+            return true
+        else
+            print("[Smart Mode] Failed to complete fishing")
+            return false
+        end
+    else
+        print("[Smart Mode] No finish remote found")
+        return false
+    end
+end
+
+local function DoSecureCycle()
+    if inCooldown() then 
+        print("[Secure Mode] In cooldown, waiting...")
+        task.wait(1)
+        return false
+    end
+    
+    print("[Secure Mode] Starting fishing cycle...")
+    
+    -- Refresh remotes if needed
+    if not rodRemote or not miniGameRemote or not finishRemote or not equipRemote then
+        print("[Secure Mode] Refreshing remotes...")
+        rodRemote, miniGameRemote, finishRemote, equipRemote = RefreshRemotes()
+    end
+    
+    -- Equip rod with cast power
+    if equipRemote then 
+        local castPower = AutoFish.config.castPower or 75
+        local ok = pcall(function() 
+            -- Try with cast power parameter
+            equipRemote:FireServer(1, castPower) 
+        end)
+        if not ok then
+            -- Fallback without cast power
+            ok = pcall(function() equipRemote:FireServer(1) end)
+        end
+        
+        if ok then
+            print("[Secure Mode] Rod equipped with cast power:", castPower)
+        else
+            print("[Secure Mode] Failed to equip rod")
+            return false
+        end
+        task.wait(0.3)
+    else
+        print("[Secure Mode] No equip remote found")
+        return false
+    end
+    
+    -- Secure mode with smart perfect catch logic
+    local usePerfect
+    if AutoFish.config.perfectCatch then
+        usePerfect = true  -- Force perfect if toggle enabled
+        print("[Secure Mode] Perfect catch mode ENABLED - forcing perfect")
+    else
+        -- Secure mode uses lower perfect rate for safety
+        local secureRate = math.min(AutoFish.config.safeModeChance * 0.7, 50) -- Max 50% in secure
+        usePerfect = math.random(1,100) <= secureRate
+        print("[Secure Mode] Using reduced perfect rate:", secureRate .. "%")
+    end
+    
+    -- Use perfect or humanized timing
+    local timestamp
+    if usePerfect then
+        timestamp = GetServerTime()
+        print("[Secure Mode] Using perfect timestamp")
+    else
+        timestamp = GetServerTime() + math.random(1,5)*0.1
+        print("[Secure Mode] Using humanized timestamp:", timestamp)
+    end
+    
+    -- Charge rod
+    if rodRemote and rodRemote:IsA("RemoteFunction") then 
+        local ok = pcall(function() rodRemote:InvokeServer(timestamp) end)
+        if ok then
+            print("[Secure Mode] Rod charged")
+        else
+            print("[Secure Mode] Failed to charge rod")
+            return false
+        end
+    else
+        print("[Secure Mode] No rod remote found or wrong type")
+        return false
+    end
+    
+    task.wait(0.3 + math.random()*0.2)
+    
+    -- Mini-game with perfect/humanized coordinates
+    local x, y
+    if usePerfect then
+        x, y = -1.238, 0.969  -- Perfect coordinates
+        print("[Secure Mode] Using perfect coordinates")
+    else
+        x = math.random(-800,800)/1000
+        y = math.random(200,900)/1000
+        print("[Secure Mode] Using human-like coordinates:", x, y)
+    end
+    
+    if miniGameRemote and miniGameRemote:IsA("RemoteFunction") then 
+        local ok = pcall(function() miniGameRemote:InvokeServer(x,y) end)
+        if ok then
+            print("[Secure Mode] Mini-game started")
+        else
+            print("[Secure Mode] Failed to start mini-game")
+            return false
+        end
+    else
+        print("[Secure Mode] No mini-game remote found or wrong type")
+        return false
+    end
+    
+    task.wait(2.0 + math.random()*1.0) -- Extended wait with randomization
+    
+    -- Complete fishing
+    if finishRemote then 
+        local ok = pcall(function() finishRemote:FireServer() end)
+        if ok then
+            print("[Secure Mode] Fishing completed successfully!")
+            return true
+        else
+            print("[Secure Mode] Failed to complete fishing")
+            return false
+        end
+    else
+        print("[Secure Mode] No finish remote found")
+        return false
     end
 end
 
@@ -203,18 +366,30 @@ end
 local function AutofishRunner(mySession)
     notify("AutoFish", "Started (mode: " .. AutoFish.config.mode .. ")")
     
+    local cycleCount = 0
+    local successCount = 0
+    
     while AutoFish.config.enabled and sessionId == mySession do
+        local cycleSuccess = false
         local ok, err = pcall(function()
             if AutoFish.config.mode == "secure" then 
-                DoSecureCycle() 
+                cycleSuccess = DoSecureCycle() 
             else 
-                DoSmartCycle()
+                cycleSuccess = DoSmartCycle()
             end
         end)
         
+        cycleCount = cycleCount + 1
+        
         if not ok then
             warn("AutoFish cycle error:", err)
+            print(string.format("[AutoFish] Cycle %d failed with error", cycleCount))
             task.wait(0.4 + math.random()*0.5)
+        elseif cycleSuccess then
+            successCount = successCount + 1
+            print(string.format("[AutoFish] Cycle %d completed successfully! (%d/%d successful)", cycleCount, successCount, cycleCount))
+        else
+            print(string.format("[AutoFish] Cycle %d failed (%d/%d successful)", cycleCount, successCount, cycleCount))
         end
         
         -- Delay between cycles
@@ -229,6 +404,8 @@ local function AutofishRunner(mySession)
         end
     end
     
+    print(string.format("[AutoFish] Session ended. Total cycles: %d, Successful: %d (%.1f%%)", 
+        cycleCount, successCount, cycleCount > 0 and (successCount/cycleCount*100) or 0))
     notify("AutoFish", "Stopped")
 end
 
@@ -247,6 +424,25 @@ function AutoFish.stop()
     if not AutoFish.config.enabled then return false end
     
     AutoFish.config.enabled = false
+    
+    -- Unequip rod when stopping
+    local unequipRemote = ResolveRemote("RE/UnequipTool")
+    if unequipRemote then
+        pcall(function() 
+            unequipRemote:FireServer()
+            print("[AutoFish] Rod unequipped")
+        end)
+    else
+        -- Alternative method: try to unequip using different remote
+        if equipRemote then
+            pcall(function()
+                equipRemote:FireServer(0) -- 0 typically unequips
+                print("[AutoFish] Rod unequipped (alternative method)")
+            end)
+        end
+    end
+    
+    notify("AutoFish", "Stopped and rod unequipped")
     return true
 end
 
