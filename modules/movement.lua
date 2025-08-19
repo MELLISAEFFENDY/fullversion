@@ -140,4 +140,36 @@ function Movement.setConfig(newConfig)
     end
 end
 
+-- New functions for ORION UI compatibility
+function Movement.setFloat(enabled)
+    if enabled then
+        Movement.enableFloat()
+    else
+        Movement.disableFloat()
+    end
+end
+
+function Movement.setNoClip(enabled)
+    if enabled then
+        Movement.enableNoClip()
+    else
+        Movement.disableNoClip()
+    end
+end
+
+function Movement.setAutoSpinner(enabled)
+    if enabled then
+        Movement.enableAutoSpinner()
+    else
+        Movement.disableAutoSpinner()
+    end
+end
+
+function Movement.setSpinnerSpeed(speed)
+    if speed and speed >= 1 and speed <= 20 then
+        Movement.config.spinnerSpeed = speed
+        notify("Movement", "Spinner speed set to: " .. speed .. "x")
+    end
+end
+
 return Movement

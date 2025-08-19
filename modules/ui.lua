@@ -14,8 +14,12 @@ local LocalPlayer = Players.LocalPlayer
 UI.config = {
     theme = "dark",
     position = {x = 10, y = 10},
-    size = {width = 400, height = 600}, -- Increased height for more sections
-    transparency = 0.1
+    size = {
+        portrait = {width = 400, height = 600},  -- Untuk portrait/desktop
+        landscape = {width = 500, height = 400}  -- Untuk landscape (lebih lebar, lebih pendek)
+    },
+    transparency = 0.1,
+    autoResize = true
 }
 
 -- UI State
@@ -38,6 +42,30 @@ local colors = {
 }
 
 -- Helper functions
+local function detectScreenOrientation()
+    local screenSize = workspace.CurrentCamera.ViewportSize
+    return screenSize.X > screenSize.Y and "landscape" or "portrait"
+end
+
+local function getOptimalSize()
+    local orientation = detectScreenOrientation()
+    local screenSize = workspace.CurrentCamera.ViewportSize
+    
+    if orientation == "landscape" then
+        -- Landscape: wider but shorter
+        return {
+            width = math.min(500, screenSize.X * 0.4),
+            height = math.min(400, screenSize.Y * 0.8)
+        }
+    else
+        -- Portrait: taller but narrower
+        return {
+            width = math.min(400, screenSize.X * 0.9),
+            height = math.min(600, screenSize.Y * 0.9)
+        }
+    end
+end
+
 local function createFrame(parent, props)
     local frame = Instance.new("Frame")
     frame.Parent = parent
@@ -114,8 +142,11 @@ local function createLabel(parent, props)
 end
 
 local function createToggle(parent, props)
+    local orientation = detectScreenOrientation()
+    local frameHeight = props.Size and props.Size.Y.Offset or (orientation == "landscape" and 30 or 40)
+    
     local frame = createFrame(parent, {
-        Size = UDim2.new(1, -10, 0, 40),
+        Size = props.Size or UDim2.new(1, -10, 0, frameHeight),
         Position = props.Position,
         BackgroundColor3 = colors.dark.secondary
     })
@@ -124,14 +155,17 @@ local function createToggle(parent, props)
         Text = props.Text or "Toggle",
         Size = UDim2.new(0.7, 0, 1, 0),
         Position = UDim2.new(0, 10, 0, 0),
-        TextSize = 16,
+        TextSize = orientation == "landscape" and 12 or 16,
         Font = Enum.Font.SourceSansBold
     })
     
+    local toggleWidth = orientation == "landscape" and 50 or 60
+    local toggleHeight = frameHeight - 10
+    
     local toggle = createButton(frame, {
         Text = props.Enabled and "ON" or "OFF",
-        Size = UDim2.new(0, 60, 0, 25),
-        Position = UDim2.new(1, -70, 0.5, -12.5),
+        Size = UDim2.new(0, toggleWidth, 0, toggleHeight),
+        Position = UDim2.new(1, -toggleWidth - 10, 0.5, -toggleHeight/2),
         BackgroundColor3 = props.Enabled and colors.dark.success or colors.dark.danger,
         OnClick = function()
             props.Enabled = not props.Enabled
@@ -156,16 +190,21 @@ local function createMainUI()
     screenGui.ResetOnSpawn = false
     screenGui.Parent = playerGui
     
+    -- Get optimal size based on screen orientation
+    local optimalSize = getOptimalSize()
+    local orientation = detectScreenOrientation()
+    
     -- Main frame
     mainFrame = createFrame(screenGui, {
-        Size = UDim2.new(0, UI.config.size.width, 0, UI.config.size.height),
+        Size = UDim2.new(0, optimalSize.width, 0, optimalSize.height),
         Position = UDim2.new(0, UI.config.position.x, 0, UI.config.position.y),
         BackgroundColor3 = colors.dark.background
     })
     
-    -- Title bar
+    -- Title bar with responsive height
+    local titleBarHeight = orientation == "landscape" and 30 or 40
     local titleBar = createFrame(mainFrame, {
-        Size = UDim2.new(1, 0, 0, 40),
+        Size = UDim2.new(1, 0, 0, titleBarHeight),
         Position = UDim2.new(0, 0, 0, 0),
         BackgroundColor3 = colors.dark.accent
     })
@@ -174,7 +213,7 @@ local function createMainUI()
         Text = "🎣 Modern AutoFish v2.0",
         Size = UDim2.new(0.8, 0, 1, 0),
         Position = UDim2.new(0, 10, 0, 0),
-        TextSize = 18,
+        TextSize = orientation == "landscape" and 14 or 18,
         Font = Enum.Font.SourceSansBold,
         TextColor3 = colors.dark.text
     })
@@ -182,18 +221,21 @@ local function createMainUI()
     -- Close button
     local closeBtn = createButton(titleBar, {
         Text = "✕",
-        Size = UDim2.new(0, 30, 0, 30),
-        Position = UDim2.new(1, -35, 0, 5),
+        Size = UDim2.new(0, titleBarHeight - 5, 0, titleBarHeight - 5),
+        Position = UDim2.new(1, -(titleBarHeight), 0, 2.5),
         BackgroundColor3 = colors.dark.danger,
         OnClick = function()
             UI.toggle()
         end
     })
     
-    -- Content area
+    -- Content area with responsive spacing
+    local contentMargin = orientation == "landscape" and 5 or 10
+    local contentTop = titleBarHeight + contentMargin
+    
     local content = createFrame(mainFrame, {
-        Size = UDim2.new(1, -20, 1, -60),
-        Position = UDim2.new(0, 10, 0, 50),
+        Size = UDim2.new(1, -contentMargin*2, 1, -contentTop - contentMargin),
+        Position = UDim2.new(0, contentMargin, 0, contentTop),
         BackgroundColor3 = colors.dark.secondary
     })
     
@@ -204,14 +246,14 @@ local function createMainUI()
     scrollFrame.Position = UDim2.new(0, 5, 0, 5)
     scrollFrame.BackgroundTransparency = 1
     scrollFrame.BorderSizePixel = 0
-    scrollFrame.ScrollBarThickness = 8
+    scrollFrame.ScrollBarThickness = orientation == "landscape" and 6 or 8
     scrollFrame.ScrollBarImageColor3 = colors.dark.accent
     
-    -- Layout
+    -- Layout with responsive spacing
     local layout = Instance.new("UIListLayout")
     layout.Parent = scrollFrame
     layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 5)
+    layout.Padding = UDim.new(0, orientation == "landscape" and 3 or 5)
     
     return scrollFrame
 end
@@ -220,8 +262,11 @@ end
 local function createAutoFishSection(parent)
     if not modules.autofish then return end
     
+    local orientation = detectScreenOrientation()
+    local sectionHeight = orientation == "landscape" and 80 or 120
+    
     local section = createFrame(parent, {
-        Size = UDim2.new(1, 0, 0, 120),
+        Size = UDim2.new(1, 0, 0, sectionHeight),
         BackgroundColor3 = colors.dark.background
     })
     section.LayoutOrder = 1
@@ -229,14 +274,16 @@ local function createAutoFishSection(parent)
     local sectionTitle = createLabel(section, {
         Text = "🎣 AutoFishing",
         Position = UDim2.new(0, 10, 0, 5),
-        TextSize = 16,
+        TextSize = orientation == "landscape" and 14 or 16,
         Font = Enum.Font.SourceSansBold
     })
     
-    -- AutoFish toggle
+    -- AutoFish toggle dengan posisi compact untuk landscape
+    local toggleHeight = orientation == "landscape" and 30 or 40
     local _, fishToggle = createToggle(section, {
         Text = "Enable AutoFish",
-        Position = UDim2.new(0, 5, 0, 25),
+        Position = UDim2.new(0, 5, 0, 20),
+        Size = UDim2.new(1, -10, 0, toggleHeight),
         Enabled = modules.autofish.getStatus().enabled,
         OnToggle = function(enabled)
             if enabled then
@@ -247,26 +294,49 @@ local function createAutoFishSection(parent)
         end
     })
     
-    -- Mode buttons
-    local smartBtn = createButton(section, {
-        Text = "Smart Mode",
-        Size = UDim2.new(0.45, 0, 0, 25),
-        Position = UDim2.new(0, 10, 0, 75),
-        BackgroundColor3 = colors.dark.success,
-        OnClick = function()
-            modules.autofish.setMode("smart")
-        end
-    })
-    
-    local secureBtn = createButton(section, {
-        Text = "Secure Mode", 
-        Size = UDim2.new(0.45, 0, 0, 25),
-        Position = UDim2.new(0.55, 0, 0, 75),
-        BackgroundColor3 = colors.dark.warning,
-        OnClick = function()
-            modules.autofish.setMode("secure")
-        end
-    })
+    if orientation == "landscape" then
+        -- Mode buttons dalam satu baris untuk landscape
+        local smartBtn = createButton(section, {
+            Text = "Smart",
+            Size = UDim2.new(0.48, 0, 0, 20),
+            Position = UDim2.new(0, 10, 0, 55),
+            BackgroundColor3 = colors.dark.success,
+            OnClick = function()
+                modules.autofish.setMode("smart")
+            end
+        })
+        
+        local secureBtn = createButton(section, {
+            Text = "Secure", 
+            Size = UDim2.new(0.48, 0, 0, 20),
+            Position = UDim2.new(0.52, 0, 0, 55),
+            BackgroundColor3 = colors.dark.warning,
+            OnClick = function()
+                modules.autofish.setMode("secure")
+            end
+        })
+    else
+        -- Mode buttons untuk portrait (layout normal)
+        local smartBtn = createButton(section, {
+            Text = "Smart Mode",
+            Size = UDim2.new(0.45, 0, 0, 25),
+            Position = UDim2.new(0, 10, 0, 75),
+            BackgroundColor3 = colors.dark.success,
+            OnClick = function()
+                modules.autofish.setMode("smart")
+            end
+        })
+        
+        local secureBtn = createButton(section, {
+            Text = "Secure Mode", 
+            Size = UDim2.new(0.45, 0, 0, 25),
+            Position = UDim2.new(0.55, 0, 0, 75),
+            BackgroundColor3 = colors.dark.warning,
+            OnClick = function()
+                modules.autofish.setMode("secure")
+            end
+        })
+    end
 end
 
 -- Create Movement section
@@ -724,6 +794,28 @@ function UI.createInterface(moduleInstances)
     -- Create floating button
     createFloatingButton()
     
+    -- Auto-resize listener untuk orientasi change
+    if UI.config.autoResize then
+        local lastOrientation = detectScreenOrientation()
+        
+        task.spawn(function()
+            while screenGui and screenGui.Parent do
+                task.wait(1) -- Check every second
+                local currentOrientation = detectScreenOrientation()
+                
+                if currentOrientation ~= lastOrientation then
+                    print("🔄 Screen orientation changed to:", currentOrientation)
+                    lastOrientation = currentOrientation
+                    
+                    -- Recreate UI dengan orientasi baru
+                    task.wait(0.5) -- Small delay to let orientation settle
+                    UI.createInterface(modules)
+                    break
+                end
+            end
+        end)
+    end
+    
     -- Update canvas size
     local layout = content:FindFirstChild("UIListLayout")
     if layout then
@@ -732,7 +824,7 @@ function UI.createInterface(moduleInstances)
         end)
     end
     
-    print("🖥️ UI created successfully")
+    print("🖥️ UI created successfully for", detectScreenOrientation(), "mode")
     return true
 end
 

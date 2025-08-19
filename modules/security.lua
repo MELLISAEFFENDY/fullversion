@@ -295,4 +295,42 @@ function Security.cleanup()
     print("🧹 Security module cleaned up")
 end
 
+-- New functions for ORION UI compatibility
+function Security.setAntiDetection(enabled)
+    Security.config.antiDetectionEnabled = enabled
+    notify("Security", "🛡️ Anti-detection: " .. (enabled and "enabled" or "disabled"))
+end
+
+function Security.setRandomizationLevel(level)
+    if level and level >= 1 and level <= 10 then
+        Security.config.randomizationLevel = level
+        notify("Security", "🎲 Randomization level set to: " .. level)
+    end
+end
+
+function Security.setAntiAFK(enabled)
+    Security.config.antiAfkEnabled = enabled
+    if enabled then
+        Security.startAntiAfk()
+    else
+        antiAfkState.running = false
+    end
+    notify("Security", "⏰ Anti-AFK: " .. (enabled and "enabled" or "disabled"))
+end
+
+function Security.setAFKInterval(interval)
+    if interval and interval >= 30 and interval <= 300 then
+        Security.config.afkCheckInterval = interval
+        notify("Security", "⏰ AFK check interval set to: " .. interval .. "s")
+    end
+end
+
+function Security.setAutoReconnect(enabled)
+    Security.config.autoReconnectEnabled = enabled
+    if enabled then
+        monitorConnection()
+    end
+    notify("Security", "🔄 Auto-reconnect: " .. (enabled and "enabled" or "disabled"))
+end
+
 return Security

@@ -49,8 +49,12 @@ local Config = {
     ui = {
         theme = "dark",
         position = {x = 10, y = 10},
-        size = {width = 400, height = 600}, -- Increased for more sections
-        transparency = 0.1
+        size = {
+            portrait = {width = 400, height = 600},  -- Portrait/Desktop mode
+            landscape = {width = 500, height = 400}  -- Landscape mode (wider, shorter)
+        },
+        transparency = 0.1,
+        autoResize = true  -- Auto-detect orientation changes
     },
     
     -- GitHub settings (for updates)

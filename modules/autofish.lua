@@ -263,9 +263,48 @@ function AutoFish.getStatus()
     }
 end
 
-function AutoFish.init(config)
-    if config and config.autofish then
-        for key, value in pairs(config.autofish) do
+-- New functions for ORION UI compatibility
+function AutoFish.isRunning()
+    return AutoFish.config.enabled
+end
+
+function AutoFish.setMode(mode)
+    if mode then
+        AutoFish.config.mode = mode:lower()
+        notify("AutoFish", "Mode changed to: " .. mode)
+    end
+end
+
+function AutoFish.setCastPower(power)
+    if power and power >= 50 and power <= 100 then
+        AutoFish.config.castPower = power
+        notify("AutoFish", "Cast power set to: " .. power .. "%")
+    end
+end
+
+function AutoFish.setAutoRecast(enabled)
+    AutoFish.config.autoRecast = enabled
+    notify("AutoFish", "Auto re-cast: " .. (enabled and "enabled" or "disabled"))
+end
+
+function AutoFish.setPerfectCatch(enabled)
+    AutoFish.config.perfectCatch = enabled
+    notify("AutoFish", "Perfect catch mode: " .. (enabled and "enabled" or "disabled"))
+end
+
+function AutoFish.setCastDelay(delay)
+    if delay and delay >= 0.1 and delay <= 5.0 then
+        AutoFish.config.autoRecastDelay = delay
+        notify("AutoFish", "Cast delay set to: " .. delay .. "s")
+    end
+end
+
+function AutoFish.init(modules, config)
+    -- Store reference to other modules
+    AutoFish.modules = modules
+    
+    if config then
+        for key, value in pairs(config) do
             if AutoFish.config[key] ~= nil then
                 AutoFish.config[key] = value
             end

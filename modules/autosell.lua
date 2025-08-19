@@ -328,4 +328,36 @@ function AutoSell.cleanup()
     print("🧹 AutoSell module cleaned up")
 end
 
+-- New functions for ORION UI compatibility
+function AutoSell.setEnabled(enabled)
+    AutoSell.config.enabled = enabled
+    notify("Auto Sell", enabled and "✅ Enabled" or "❌ Disabled")
+end
+
+function AutoSell.setThreshold(threshold)
+    if threshold and threshold >= 10 and threshold <= 100 then
+        AutoSell.config.threshold = threshold
+        syncAutoSellThresholdWithServer(threshold)
+        notify("Auto Sell", "📊 Threshold set to: " .. threshold .. "%")
+    end
+end
+
+function AutoSell.setSellCommon(enabled)
+    AutoSell.config.allowedRarities.COMMON = enabled
+    AutoSell.config.allowedRarities.UNCOMMON = enabled -- Include uncommon with common
+    notify("Auto Sell", "🐟 Common fish selling: " .. (enabled and "enabled" or "disabled"))
+end
+
+function AutoSell.setSellRare(enabled)
+    AutoSell.config.allowedRarities.RARE = enabled
+    AutoSell.config.allowedRarities.EPIC = enabled -- Include epic with rare
+    notify("Auto Sell", "🌟 Rare fish selling: " .. (enabled and "enabled" or "disabled"))
+end
+
+function AutoSell.setSellLegendary(enabled)
+    AutoSell.config.allowedRarities.LEGENDARY = enabled
+    AutoSell.config.allowedRarities.MYTHIC = enabled -- Include mythic with legendary
+    notify("Auto Sell", "👑 Legendary fish selling: " .. (enabled and "enabled" or "disabled"))
+end
+
 return AutoSell
