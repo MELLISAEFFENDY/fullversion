@@ -3,10 +3,30 @@
 
 local OrionUI = {}
 
--- Load ORION Library
-local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+-- Load ORION Library with fallback
+local function loadOrionLib()
+    local success, OrionLib = pcall(function()
+        return loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
+    end)
+    
+    if success and OrionLib then
+        return OrionLib
+    else
+        -- Try alternative URL
+        local success2, OrionLib2 = pcall(function()
+            return loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source.lua'))()
+        end)
+        
+        if success2 and OrionLib2 then
+            return OrionLib2
+        else
+            -- If both fail, create a fallback notification
+            error("Failed to load ORION library. Please check your internet connection.")
+        end
+    end
+end
 
--- Store references
+local OrionLib = loadOrionLib()
 OrionUI.Window = nil
 OrionUI.Tabs = {}
 OrionUI.Elements = {}

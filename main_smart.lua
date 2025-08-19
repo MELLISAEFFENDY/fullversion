@@ -1,9 +1,9 @@
--- main_orion.lua
--- AutoFish Pro with ORION UI
--- Modular system with enhanced interface
+-- main_smart.lua
+-- AutoFish Pro with Smart UI Loading (ORION + Fallback)
+-- Modular system with intelligent UI selection
 
-print("🎣 AutoFish Pro - ORION Edition")
-print("Loading modules...")
+print("🎣 AutoFish Pro - Smart Edition")
+print("Attempting to load with best available UI...")
 
 -- GitHub Repository Configuration
 local GITHUB_BASE = "https://raw.githubusercontent.com/MELLISAEFFENDY/fullversion/main/"
@@ -15,9 +15,12 @@ local moduleNames = {
     "movement", 
     "autosell",
     "security",
-    "dashboard",
-    "orion_ui"
+    "dashboard"
 }
+
+-- UI Selection
+local uiType = "none"
+local uiModule = nil
 
 -- Safe module loading function
 local function safeLoadModule(moduleName)
@@ -43,28 +46,48 @@ local function safeLoadModule(moduleName)
         return result
     else
         print("❌ Failed to load " .. moduleName .. ": " .. tostring(result))
+        return nil
+    end
+end
+
+-- Try to load ORION UI
+local function tryLoadOrionUI()
+    print("🌟 Attempting to load ORION UI...")
+    
+    local success, result = pcall(function()
+        -- First try to load ORION library
+        local OrionLib = loadstring(game:HttpGet(('https://raw.githubusercontent.com/shlexware/Orion/main/source')))()
         
-        -- Special handling for orion_ui failure - fallback to custom UI
-        if moduleName == "orion_ui" then
-            print("🔄 Falling back to custom UI...")
-            local fallbackSuccess, fallbackUI = pcall(function()
-                local fallbackUrl = GITHUB_BASE .. "modules/ui.lua"
-                local fallbackCode = game:HttpGet(fallbackUrl)
-                if fallbackCode and fallbackCode ~= "" then
-                    local fallbackFunc = loadstring(fallbackCode)
-                    if fallbackFunc then
-                        return fallbackFunc()
-                    end
-                end
-                return nil
-            end)
-            
-            if fallbackSuccess and fallbackUI then
-                print("✅ Fallback UI loaded successfully")
-                return fallbackUI
-            end
+        if OrionLib then
+            -- If ORION loads successfully, load our ORION UI module
+            local orionModule = safeLoadModule("orion_ui")
+            return orionModule
+        else
+            error("ORION library failed to load")
         end
-        
+    end)
+    
+    if success and result then
+        print("✅ ORION UI loaded successfully!")
+        uiType = "ORION"
+        return result
+    else
+        print("⚠️ ORION UI failed to load: " .. tostring(result))
+        return nil
+    end
+end
+
+-- Try to load Custom UI as fallback
+local function tryLoadCustomUI()
+    print("🔄 Loading Custom UI as fallback...")
+    
+    local customUI = safeLoadModule("ui")
+    if customUI then
+        print("✅ Custom UI loaded successfully!")
+        uiType = "Custom"
+        return customUI
+    else
+        print("❌ Custom UI also failed to load")
         return nil
     end
 end
@@ -105,30 +128,37 @@ local function initializeAutoFish()
     -- Load configuration first
     local config = loadConfig()
     
-    -- Load all modules
+    -- Load core modules first
     for _, moduleName in ipairs(moduleNames) do
         modules[moduleName] = safeLoadModule(moduleName)
         wait(0.1) -- Small delay between loads
     end
     
     -- Verify critical modules loaded
-    local criticalModules = {"autofish"}
-    for _, moduleName in ipairs(criticalModules) do
-        if not modules[moduleName] then
-            error("❌ Critical module failed to load: " .. moduleName)
-        end
+    if not modules.autofish then
+        error("❌ Critical module failed to load: autofish")
     end
     
-    -- Check if we have UI module (either orion_ui or fallback ui)
-    local uiModule = modules.orion_ui or modules.ui
+    -- Try to load UI (ORION first, then Custom fallback)
+    uiModule = tryLoadOrionUI()
+    if not uiModule then
+        uiModule = tryLoadCustomUI()
+    end
+    
     if not uiModule then
         error("❌ No UI module available")
     end
     
-    -- Initialize modules with cross-references
-    print("🔧 Initializing module systems...")
+    -- Store UI module in modules table
+    if uiType == "ORION" then
+        modules.orion_ui = uiModule
+    else
+        modules.ui = uiModule
+    end
     
     -- Initialize modules in dependency order
+    print("🔧 Initializing module systems...")
+    
     if modules.security then
         modules.security.init(config.security or {})
     end
@@ -149,10 +179,7 @@ local function initializeAutoFish()
         modules.autofish.init(modules, config.autofish or {})
     end
     
-    -- Initialize UI (ORION UI or fallback to custom UI)
-    local uiModule = modules.orion_ui or modules.ui
-    local uiType = modules.orion_ui and "ORION" or "Custom"
-    
+    -- Initialize UI last (it needs all other modules)
     if uiModule then
         uiModule.init(modules)
         
@@ -163,6 +190,8 @@ local function initializeAutoFish()
                 "AutoFish Pro loaded successfully with " .. uiType .. " UI!",
                 5
             )
+        elseif uiModule.notify then
+            uiModule.notify("AutoFish Pro", "Loaded successfully with " .. uiType .. " UI!")
         end
     end
     
@@ -180,7 +209,7 @@ local function safeInit()
     else
         print("❌ Initialization failed: " .. tostring(result))
         
-        -- Show error in simple UI if ORION fails
+        -- Show error in simple UI if everything fails
         local screenGui = Instance.new("ScreenGui")
         screenGui.Name = "AutoFishError"
         screenGui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
@@ -234,8 +263,8 @@ end
 -- Auto-cleanup on script stop
 local connection
 connection = game.Players.LocalPlayer.AncestryChanged:Connect(function()
-    if modules and modules.orion_ui then
-        modules.orion_ui.destroy()
+    if uiModule and uiModule.destroy then
+        uiModule.destroy()
     end
     if connection then
         connection:Disconnect()
@@ -248,13 +277,18 @@ local loadedModules = safeInit()
 -- Export for external access
 getgenv().AutoFishPro = {
     modules = loadedModules,
-    version = "2.0-ORION",
+    uiType = uiType,
+    version = "2.0-Smart",
     
     -- Quick access functions
     toggleAutoFish = function()
-        if loadedModules and loadedModules.orion_ui and loadedModules.orion_ui.Elements.AutoFishToggle then
-            local currentState = loadedModules.autofish and loadedModules.autofish.isRunning() or false
-            loadedModules.orion_ui.Elements.AutoFishToggle:Set(not currentState)
+        if loadedModules and loadedModules.autofish then
+            local currentState = loadedModules.autofish.isRunning and loadedModules.autofish.isRunning() or false
+            if currentState then
+                loadedModules.autofish.stop()
+            else
+                loadedModules.autofish.start()
+            end
         end
     end,
     
@@ -266,17 +300,25 @@ getgenv().AutoFishPro = {
     end,
     
     showUI = function()
-        if loadedModules and loadedModules.orion_ui and loadedModules.orion_ui.Window then
-            loadedModules.orion_ui.Window:SetVisible(true)
+        if uiModule then
+            if uiModule.Window and uiModule.Window.SetVisible then
+                uiModule.Window:SetVisible(true)
+            elseif uiModule.show then
+                uiModule.show()
+            end
         end
     end,
     
     hideUI = function()
-        if loadedModules and loadedModules.orion_ui and loadedModules.orion_ui.Window then
-            loadedModules.orion_ui.Window:SetVisible(false)
+        if uiModule then
+            if uiModule.Window and uiModule.Window.SetVisible then
+                uiModule.Window:SetVisible(false)
+            elseif uiModule.hide then
+                uiModule.hide()
+            end
         end
     end
 }
 
-print("🌟 AutoFish Pro with ORION UI ready!")
+print("🌟 AutoFish Pro with " .. uiType .. " UI ready!")
 print("🎮 Access via: getgenv().AutoFishPro")
